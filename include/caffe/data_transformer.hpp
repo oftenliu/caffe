@@ -11,7 +11,7 @@ namespace caffe {
 
 /**
  * @brief Applies common transformations to the input data, such as
- * scaling, mirroring, substracting the image mean...
+ * scaling, mirroring, substracting the image mean...数据预处理操作，如尺度变换，减均值，镜像变换
  */
 template <typename Dtype>
 class DataTransformer {
