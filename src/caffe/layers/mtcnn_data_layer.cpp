@@ -35,7 +35,7 @@ namespace caffe {
 
 	template <typename Dtype>
 	void MTCNNDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom, //输入
-		const vector<Blob<Dtype>*>& top) {　//top 输出
+		const vector<Blob<Dtype>*>& top) {//top 输出
 		// Read a data point, and use it to initialize the top blob.
 		MTCNNDatum& datum = *(reader_.full().peek());
 		this->output_labels_ = top.size() > 1;
@@ -199,6 +199,7 @@ namespace caffe {
 			this->transformed_data_.set_cpu_data((Dtype*)buffer.data);
 			this->data_transformer_->Transform(datum.datum(), &(this->transformed_data_));
 			//ԭͼת�������
+			
 			if (buffer.channels() > 1){
 				vector<Mat> chs;
 				Mat mergeImage;
