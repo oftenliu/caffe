@@ -71,7 +71,8 @@ void BasePrefetchingDataLayer<Dtype>::LayerSetUp(
 #endif
   DLOG(INFO) << "Initializing prefetch";
   this->data_transformer_->InitRand();
-  StartInternalThread();
+  StartInternalThread();　　//１．继承自父类public方法　启动预取线程 　非静态成员函数使用时　编译器默认将this指针作隐藏参数传递给参数　
+                           //　2. 当子类调用对象调用一个子类没有的复写的父类方法时，编译器会调用super域(父类)的方法，super域只能操作自己的方法　
   DLOG(INFO) << "Prefetch initialized.";
 }
 
@@ -87,7 +88,7 @@ void BasePrefetchingDataLayer<Dtype>::InternalThreadEntry() {
   try {
     while (!must_stop()) {
       Batch<Dtype>* batch = prefetch_free_.pop();
-      load_batch(batch);
+      load_batch(batch);//加载batch
 #ifndef CPU_ONLY
       if (Caffe::mode() == Caffe::GPU) {
         batch->data_.data().get()->async_gpu_push(stream);
@@ -97,7 +98,7 @@ void BasePrefetchingDataLayer<Dtype>::InternalThreadEntry() {
         CUDA_CHECK(cudaStreamSynchronize(stream));
       }
 #endif
-      prefetch_full_.push(batch);
+      prefetch_full_.push(batch);//batch存入prefetch_full_
     }
   } catch (boost::thread_interrupted&) {
     // Interrupted exception is expected on shutdown

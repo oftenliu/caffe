@@ -15,10 +15,10 @@ bool InternalThread::is_started() const {
 }
 
 bool InternalThread::must_stop() {
-  return thread_ && thread_->interruption_requested();
+  return thread_ && thread_->interruption_requested();//线程是否被要求中断
 }
 
-void InternalThread::StartInternalThread() {
+void InternalThread::StartInternalThread() {　
   CHECK(!is_started()) << "Threads should persist and not be restarted.";
 
   int device = 0;
@@ -29,7 +29,7 @@ void InternalThread::StartInternalThread() {
   int rand_seed = caffe_rng_rand();
   int solver_count = Caffe::solver_count();
   int solver_rank = Caffe::solver_rank();
-  bool multiprocess = Caffe::multiprocess();
+  bool multiprocess = Caffe::multiprocess();　
 
   try {
     thread_.reset(new boost::thread(&InternalThread::entry, this, device, mode,
@@ -44,13 +44,13 @@ void InternalThread::entry(int device, Caffe::Brew mode, int rand_seed,
 #ifndef CPU_ONLY
   CUDA_CHECK(cudaSetDevice(device));
 #endif
-  Caffe::set_mode(mode);
+  Caffe::set_mode(mode);//设置模式
   Caffe::set_random_seed(rand_seed);
   Caffe::set_solver_count(solver_count);
   Caffe::set_solver_rank(solver_rank);
   Caffe::set_multiprocess(multiprocess);
 
-  InternalThreadEntry();
+  InternalThreadEntry();　//通过虚函数表回调子类方法
 }
 
 void InternalThread::StopInternalThread() {

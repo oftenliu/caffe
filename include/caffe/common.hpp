@@ -119,14 +119,14 @@ class Caffe {
     explicit RNG(const RNG&);
     RNG& operator=(const RNG&);
     void* generator();
-   private:
+    private:
     class Generator;
     shared_ptr<Generator> generator_;
   };
 
   // Getters for boost rng, curand, and cublas handles
   inline static RNG& rng_stream() {
-    if (!Get().random_generator_) {
+    if (!Get().random_generator_) {//如果当前共享指针实例为空　　则新建RNG指针实例
       Get().random_generator_.reset(new RNG());
     }
     return *(Get().random_generator_);

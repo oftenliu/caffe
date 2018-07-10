@@ -36,7 +36,7 @@ class InternalThread {
  protected:
   /* Implement this method in your subclass
       with the code you want your thread to run. */
-  virtual void InternalThreadEntry() {}
+  virtual void InternalThreadEntry() {}//虚函数　　c++利用虚函数实现多态　子类调用各自的InternalThreadEntry方法
 
   /* Should be tested when running loops to exit when requested. */
   bool must_stop();

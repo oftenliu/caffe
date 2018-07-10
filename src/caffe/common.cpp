@@ -10,11 +10,11 @@
 namespace caffe {
 
 // Make sure each thread can have different values.
-static boost::thread_specific_ptr<Caffe> thread_instance_;
+static boost::thread_specific_ptr<Caffe> thread_instance_;//线程本地存储
 
 Caffe& Caffe::Get() {
   if (!thread_instance_.get()) {
-    thread_instance_.reset(new Caffe());
+    thread_instance_.reset(new Caffe()); //// 如果当前线程没有caffe实例,则创建一个caffe实例
   }
   return *(thread_instance_.get());
 }

@@ -11,7 +11,7 @@
 
 namespace caffe {
 
-typedef boost::mt19937 rng_t;
+typedef boost::mt19937 rng_t;　//mt19937对象
 
 inline rng_t* caffe_rng() {
   return static_cast<caffe::rng_t*>(Caffe::rng_stream().generator());
