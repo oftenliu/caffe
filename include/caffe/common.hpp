@@ -112,7 +112,7 @@ class Caffe {
 
   // This random number generator facade hides boost and CUDA rng
   // implementation from one another (for cross-platform compatibility).
-  class RNG {
+  class RNG { //随机数生成器
    public:
     RNG();
     explicit RNG(unsigned int seed);

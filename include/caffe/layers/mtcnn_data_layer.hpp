@@ -9,6 +9,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/data_transformer.hpp"
 #include "caffe/internal_thread.hpp"
+#include "caffe/data_reader.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/layers/base_data_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
@@ -39,6 +40,7 @@ class MtcnnDataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual void load_batch(Batch<Dtype>* batch);
   
   vector<string> lines_;
+  DataReader<MTCNNDatum> reader_;
   int lines_id_;
   bool output_pts_;
   bool output_roi_;
