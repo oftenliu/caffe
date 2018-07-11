@@ -39,7 +39,7 @@ Net<Dtype>::Net(const string& param_file, Phase phase,
   param.mutable_state()->set_level(level);
   Init(param);
 }
-
+//初始化网络
 template <typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
   // Set phase from the state.
@@ -47,15 +47,15 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   // Filter layers based on their include/exclude rules and
   // the current NetState.
   NetParameter filtered_param;
-  FilterNet(in_param, &filtered_param);
+  FilterNet(in_param, &filtered_param);//把不符合规则的层去掉
   LOG_IF(INFO, Caffe::root_solver())
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
-  InsertSplits(filtered_param, &param);
+  InsertSplits(filtered_param, &param);//对于底层一个输出blob对应多个上层的情况，则要在加入分裂层，形成新的网络
   // Basically, build all the layers and set up their connections.
-  name_ = param.name();
+  name_ = param.name();// LeNet
   map<string, int> blob_name_to_idx;
   set<string> available_blobs;
   memory_used_ = 0;
