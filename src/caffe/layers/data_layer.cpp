@@ -30,7 +30,7 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   const int batch_size = this->layer_param_.data_param().batch_size();
   // Read a data point, and use it to initialize the top blob.
-  Datum datum;
+  Datum datum;//Datum用来从LMDB/LEVELDB 中读取数据
   datum.ParseFromString(cursor_->value());
 
   // Use data_transformer to infer the expected blob shape from datum.
@@ -48,7 +48,7 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << top[0]->width();
   // label
   if (this->output_labels_) {
-    vector<int> label_shape(1, batch_size);
+    vector<int> label_shape(1, batch_size);//初始化为具有1个元素，值为batch_size的vector变量
     top[1]->Reshape(label_shape);
     for (int i = 0; i < this->prefetch_.size(); ++i) {
       this->prefetch_[i]->label_.Reshape(label_shape);
