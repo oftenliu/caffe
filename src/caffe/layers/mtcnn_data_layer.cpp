@@ -53,9 +53,8 @@ void MTCNNDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     //data, label, roi, pts
     // Use data_transformer to infer the expected blob shape from datum.
     vector<int> top_shape = this->data_transformer_->InferBlobShape(datum);
-    raw_image_shape_ = top_shape;
     //��֤ת������ԭͼ�ߴ�
-    this->transformed_data_.Reshape(raw_image_shape_);
+    this->transformed_data_.Reshape(top_shape);
 
 
     // Reshape top[0] and prefetch_data according to the batch_size.
@@ -134,6 +133,20 @@ void MTCNNDataLayer<Dtype>::Forward_cpu(
     prefetch_free_.push(batch);
 }
 
+
+template<typename Dtype>
+void MTCNNDataLayer<Dtype>::Next() {
+  cursor_->Next();
+  if (!cursor_->valid()) {
+    LOG_IF(INFO, Caffe::root_solver())
+        << "Restarting data prefetching from start.";
+    cursor_->SeekToFirst();
+  }
+  offset_++;
+}
+
+
+
 // This function is called on prefetch thread
 template<typename Dtype>
 void MTCNNDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
@@ -147,31 +160,15 @@ void MTCNNDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     // Reshape according to the first datum of each batch
     // on single input batches allows for inputs of varying dimension.
-    const int raw_batch_size = this->layer_param_.data_param().batch_size();
-    int num_positive = this->layer_param_.mtcnn_data_param().num_positive();
-    int num_negitive = this->layer_param_.mtcnn_data_param().num_negitive();
-    int num_part = this->layer_param_.mtcnn_data_param().num_part();
-    bool augmented = this->layer_param_.mtcnn_data_param().augmented();
-    bool fliped = this->layer_param_.mtcnn_data_param().flip();
-    int resize_width = this->layer_param_.mtcnn_data_param().resize_width();
-    int resize_height = this->layer_param_.mtcnn_data_param().resize_height();
-    float min_negitive_scale = this->layer_param_.mtcnn_data_param().min_negitive_scale();
-    float max_negitive_scale = this->layer_param_.mtcnn_data_param().max_negitive_scale();
+    const int batch_size = this->layer_param_.data_param().batch_size();
 
-    num_positive = num_positive == -1 ? raw_batch_size : num_positive;
-    num_negitive = num_negitive == -1 ? raw_batch_size : num_negitive;
-    num_part = num_part == -1 ? raw_batch_size : num_part;
-    const int batch_size = num_positive + num_negitive + num_part;
-
-    Datum datum;//Datum用来从LMDB/LEVELDB 中读取数据
+    MTCNNDatum datum;//Datum用来从LMDB/LEVELDB 中读取数据
     datum.ParseFromString(cursor_->value());
     // Use data_transformer to infer the expected blob shape from datum.
     vector<int> top_shape = this->data_transformer_->InferBlobShape(datum);
     this->transformed_data_.Reshape(top_shape);
     // Reshape batch according to the batch_size.
     top_shape[0] = batch_size;
-    top_shape[2] = resize_height;
-    top_shape[3] = resize_width;
     batch->data_.Reshape(top_shape);
 
     //Ϊ��ͼ׼��һ�����������û�������ͼ����ƽ��ŵģ���Ҫ�任�ɷ�ͨ��
@@ -180,129 +177,41 @@ void MTCNNDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     Dtype* top_label = batch->label_.mutable_cpu_data();
     Dtype* top_roi = batch->roi_.mutable_cpu_data();
 
-    vector<Mat> ims;
-    vector<vector<Rect>> bboxs;
     //Dtype* top_pts = output_pts_ ? batch->pts_.mutable_cpu_data() : 0;
     for (int item_id = 0; item_id < raw_batch_size; ++item_id) {
         timer.Start();
+
         // get a datum
-        MTCNNDatum& datum = *(reader_.full().pop("Waiting for data"));
+        datum.ParseFromString(cursor_->value());
         const Datum& data = datum.datum();
         //printf("****************datum.pts_size() = %d\n", datum.pts_size());  
 
         read_time += timer.MicroSeconds();
         timer.Start();
-        // Apply data transformations (mirror, scale, crop...)
-        this->transformed_data_.set_cpu_data((Dtype*)buffer.data);
-        this->data_transformer_->Transform(datum.datum(), &(this->transformed_data_));
-        //ԭͼת�������
-        if (buffer.channels() > 1){
-            vector<Mat> chs;
-            Mat mergeImage;
-            for (int k = 0; k < buffer.channels(); ++k){
-                chs.push_back(Mat(buffer.rows, buffer.cols, CV_32F, (char*)((float*)buffer.data + buffer.rows * buffer.cols)));
-            }
-            merge(chs, mergeImage);
-            ims.push_back(mergeImage);
-        }
-        else{
-            ims.push_back(buffer.clone());
-        }
-
-        vector<Rect> boxs;
-        for (int k = 0; k < datum.rois_size(); ++k){
-            Rect box(
-                datum.rois(k).xmin(), datum.rois(k).ymin(),
-                datum.rois(k).xmax() - datum.rois(k).xmin() + 1,
-                datum.rois(k).ymax() - datum.rois(k).ymin() + 1);
-            boxs.push_back(box);
-        }
-        bboxs.push_back(boxs);
-        trans_time += timer.MicroSeconds();
-        reader_.free().push(const_cast<MTCNNDatum*>(&datum));
-    }
-
-    vector<SampleInfo> samples;
-    genSamples(ims, bboxs, Size(resize_width, resize_height), num_positive, num_negitive, num_part, samples, min_negitive_scale, max_negitive_scale, augmented, fliped);
-
-    for (int i = 0; i < samples.size(); ++i){
-        int offset = batch->data_.offset(i);
-        Dtype* image = top_data + offset;
-
-        //��ͨ����
-        if(samples[i].im.channels() > 1){
-            Dtype* ptr = image;
-            Mat ch;
-            for (int k = 0; k < samples[i].im.channels(); ++k){
-                cv::extractChannel(samples[i].im, ch, k);
-                memcpy(ptr, ch.data, ch.rows*ch.cols*sizeof(Dtype));
-                ptr += ch.rows*ch.cols;
-            }
-        }
-        else{
-            memcpy(image, samples[i].im.data, samples[i].im.rows*samples[i].im.cols*sizeof(Dtype));
-        }
-
-        top_label[i] = samples[i].label;
-        top_roi[i * 4 + 0] = samples[i].offx1;
-        top_roi[i * 4 + 1] = samples[i].offy1;
-        top_roi[i * 4 + 2] = samples[i].offx2;
-        top_roi[i * 4 + 3] = samples[i].offy2;
-    }
-#if 0
-    Dtype* top_data = batch->data_.mutable_cpu_data();
-    Dtype* top_label = batch->label_.mutable_cpu_data();
-    Dtype* top_roi = batch->roi_.mutable_cpu_data();
-    //Dtype* top_pts = output_pts_ ? batch->pts_.mutable_cpu_data() : 0;
-    for (int item_id = 0; item_id < batch_size; ++item_id) {
-        timer.Start();
-        // get a datum
-        MTCNNDatum& datum = *(reader_.full().pop("Waiting for data"));
-        const Datum& data = datum.datum();
-        //printf("****************datum.pts_size() = %d\n", datum.pts_size());  
-
-        read_time += timer.MicroSeconds();
-        timer.Start();
-        // Apply data transformations (mirror, scale, crop...)
+        //获取data数据
         int offset = batch->data_.offset(item_id);
         this->transformed_data_.set_cpu_data(top_data + offset);
-        this->data_transformer_->Transform(datum.datum(), &(this->transformed_data_));
+        this->data_transformer_->Transform(datum, &(this->transformed_data_));
         // Copy label.
-        if (data.labels_size() > 0){
-            for (int labi = 0; labi < data.labels_size(); ++labi)
-                top_label[item_id*data.labels_size() + labi] = data.labels(labi);
+        if (this->output_labels_) {
+            top_label[item_id] = datum.label();
         }
-        else{
-            top_label[item_id] = data.label();
-        }
-
-        //copy roi
-        //for (int roii = 0; roii < datum.ro)
-        top_roi[item_id * 4 + 0] = datum.roi().xmin();
-        top_roi[item_id * 4 + 1] = datum.roi().ymin();
-        top_roi[item_id * 4 + 2] = datum.roi().xmax();
-        top_roi[item_id * 4 + 3] = datum.roi().ymax();
-
-        //printf("datum.pts_size() = %d\n", datum.pts_size());
-        //copy pts
-        if (output_pts_){
-            for (int ptsi = 0; ptsi < datum.pts_size(); ++ptsi)
-                top_pts[item_id * datum.pts_size() + ptsi] = datum.pts(ptsi);
-        }
-
+        top_roi[item_id+0] = datum.rois.xmin();
+        top_roi[item_id+1] = datum.rois.ymin();
+        top_roi[item_id+2] = datum.rois.xmax() - datum.rois.xmin() + 1;
+        top_roi[item_id+3] = datum.rois.ymax() - datum.rois.ymin() + 1);
         trans_time += timer.MicroSeconds();
-        reader_.free().push(const_cast<MTCNNDatum*>(&datum));
+        Next();
+
     }
-#endif
+
     timer.Stop();
     batch_timer.Stop();
     DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
     DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
     DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
 }
-#ifdef CPU_ONLY
-STUB_GPU(MTCNNDataLayer);
-#endif
+
 
 INSTANTIATE_CLASS(MTCNNDataLayer);
 REGISTER_LAYER_CLASS(MTCNNData);
