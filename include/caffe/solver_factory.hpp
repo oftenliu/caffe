@@ -57,11 +57,11 @@ class SolverRegistry {
   typedef std::map<string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
-    static CreatorRegistry* g_registry_ = new CreatorRegistry();
+    static CreatorRegistry* g_registry_ = new CreatorRegistry();//第一次调用时执行一次　之后不再执行
     return *g_registry_;
   }
 
-  // Adds a creator.
+  // Adds a creator.将solver的type及creator保存至static的g_registry
   static void AddCreator(const string& type, Creator creator) {
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 0)
@@ -109,7 +109,7 @@ class SolverRegistry {
 
 
 template <typename Dtype>
-class SolverRegisterer {
+class SolverRegisterer {//通过构造SolverRegisterer对象进行注册添加Creator
  public:
   SolverRegisterer(const string& type,
       Solver<Dtype>* (*creator)(const SolverParameter&)) {
@@ -118,11 +118,13 @@ class SolverRegisterer {
   }
 };
 
-
+//定义两个SolverRegisterer类
+//以SGD为例　将构造g_creator_f_SGD g_creator_d_SGD 
 #define REGISTER_SOLVER_CREATOR(type, creator)                                 \
   static SolverRegisterer<float> g_creator_f_##type(#type, creator<float>);    \
   static SolverRegisterer<double> g_creator_d_##type(#type, creator<double>)   \
 
+//注册solver类 以及对应的Creator函数　Creator_##type##Solver（假设type:SGD，则该函数新建一个SGDSolver对象）
 #define REGISTER_SOLVER_CLASS(type)                                            \
   template <typename Dtype>                                                    \
   Solver<Dtype>* Creator_##type##Solver(                                       \

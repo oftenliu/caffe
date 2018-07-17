@@ -140,6 +140,24 @@ bool ReadImageToDatum(const string& filename, const int label,
     return false;
   }
 }
+
+
+bool ReadImageToMTCNNDatum(const string& filename, const vector<float>& label,
+  const int height, const int width, const bool is_color,
+  const std::string & encoding, MTCNNDatum* datum){
+
+  //label, roi_minx, roi_miny, roi_maxx, roi_maxy, pts
+  bool succ = ReadImageToDatum(filename, (int)label[0], height, width, is_color, encoding, datum->mutable_datum());
+  if (succ){
+    datum->clear_rois();
+    auto rois = datum->mutable_rois();
+    rois->set_xmin(label[1]);
+    rois->set_ymin(label[2]);
+    rois->set_xmax(label[3]);
+    rois->set_ymax(label[4]);
+  }
+  return succ;
+}
 #endif  // USE_OPENCV
 
 bool ReadFileToDatum(const string& filename, const int label,

@@ -17,7 +17,7 @@ namespace caffe {
  * @brief A wrapper around SyncedMemory holders serving as the basic
  *        computational unit through which Layer%s, Net%s, and Solver%s
  *        interact.
- *
+ * BLOB是SyncedMemory的包装类存储
  * TODO(dox): more thorough description.
  */
 template <typename Dtype>
@@ -267,12 +267,12 @@ class Blob {
   bool ShapeEquals(const BlobProto& other);
 
  protected:
-  shared_ptr<SyncedMemory> data_;
-  shared_ptr<SyncedMemory> diff_;
+  shared_ptr<SyncedMemory> data_;//存储前向传播的data
+  shared_ptr<SyncedMemory> diff_;//存储反向传播的loss
   shared_ptr<SyncedMemory> shape_data_;
-  vector<int> shape_;
-  int count_;
-  int capacity_;
+  vector<int> shape_;//存储blob的形状　个数 通道数 高度 宽度
+  int count_;       //count表示Blob中的元素个数，也就是个数*通道数*高度*宽度
+  int capacity_;    //当前的元素个数 因为Blob可能会reshape
 
   DISABLE_COPY_AND_ASSIGN(Blob);
 };  // class Blob

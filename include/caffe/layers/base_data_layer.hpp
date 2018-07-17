@@ -13,7 +13,7 @@
 namespace caffe {
 
 /**
- * @brief Provides base for data layers that feed blobs to the Net.Êý¾Ý²ã ¸ønetÊäÈëblobÊý¾Ý
+ * @brief Provides base for data layers that feed blobs to the Net.ï¿½ï¿½ï¿½Ý²ï¿½ ï¿½ï¿½netï¿½ï¿½ï¿½ï¿½blobï¿½ï¿½ï¿½ï¿½
  *
  * TODO(dox): thorough documentation for Forward and proto params.
  */
@@ -22,11 +22,11 @@ class BaseDataLayer : public Layer<Dtype> {
  public:
   explicit BaseDataLayer(const LayerParameter& param);
   // LayerSetUp: implements common data layer setup functionality, and calls
-  // DataLayerSetUp to do special data layer setup for individual layer types.//µ÷ÓÃDataLayerSetUpÍê³É×Ô¶¨ÒåÊý¾Ý²ãµÄ½¨Á¢
+  // DataLayerSetUp to do special data layer setup for individual layer types.//ï¿½ï¿½ï¿½ï¿½DataLayerSetUpï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²ï¿½Ä½ï¿½ï¿½ï¿½
   // This method may not be overridden except by the BasePrefetchingDataLayer.
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);  
-  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom, //Êý¾Ý²ã³õÊ¼»¯
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom, //ï¿½ï¿½ï¿½Ý²ï¿½ï¿½Ê¼ï¿½ï¿½
       const vector<Blob<Dtype>*>& top) {}
   // Data layers have no bottoms, so reshaping is trivial.
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -38,16 +38,16 @@ class BaseDataLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
 
  protected:
-  TransformationParameter transform_param_;//// ¶ÔÊäÈëµÄÊý¾Ý½øÐÐ±ä»»µÄ²ÎÊý£¬ÕâÆäÖÐ°üÀ¨ÊÇ·ñÐèÒªmirror£¬ÊÇ·ñÐèÒªcrop
-  															// ÊÇ·ñÐèÒª¼õÈ¥meanfile£¬ÊÇ·ñÐèÒªscale
-  shared_ptr<DataTransformer<Dtype> > data_transformer_; //Ö´ÐÐ²ÎÊý±ä»»µÄÖ¸Õë
-  bool output_labels_;  //ÊÇ·ñÓÐ±ê×¢Êý¾Ý
+  TransformationParameter transform_param_;//// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½ï¿½ï¿½Ð±ä»»ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð°ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªmirrorï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªcrop
+  															// ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½ï¿½È¥meanfileï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªscale
+  shared_ptr<DataTransformer<Dtype> > data_transformer_; //Ö´ï¿½Ð²ï¿½ï¿½ï¿½ï¿½ä»»ï¿½ï¿½Ö¸ï¿½ï¿½
+  bool output_labels_;  //ï¿½Ç·ï¿½ï¿½Ð±ï¿½×¢ï¿½ï¿½ï¿½ï¿½
 };
 
 template <typename Dtype>
 class Batch {
  public:
-  Blob<Dtype> data_, label_;
+  Blob<Dtype> data_, label_,roi_;
 };
 
 template <typename Dtype>

@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     gflags::ShowUsageWithFlagsRestrict(argv[0], "tools/convert_imageset");
     return 1;
   }
-
+  
   const bool is_color = !FLAGS_gray;
   const bool check_size = FLAGS_check_size;
   const bool encoded = FLAGS_encoded;

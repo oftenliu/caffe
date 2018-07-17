@@ -60,6 +60,9 @@ typedef int (*BrewFunction)();
 typedef std::map<caffe::string, BrewFunction> BrewMap;
 BrewMap g_brew_map;
 
+//宏定义的方式声明了分别包含train()，test()，device_query()，time()四个函数的四个不同类 g_brew_map保存函数地址
+//#为字符串
+//##表示合并字符串
 #define RegisterBrewFunction(func) \
 namespace { \
 class __Registerer_##func { \
@@ -171,16 +174,16 @@ int train() {
   vector<string> stages = get_stages_from_flags();
 
   caffe::SolverParameter solver_param;
-  caffe::ReadSolverParamsFromTextFileOrDie(FLAGS_solver, &solver_param);
+  caffe::ReadSolverParamsFromTextFileOrDie(FLAGS_solver, &solver_param);// 读取solver_param文件参数
 
-  solver_param.mutable_train_state()->set_level(FLAGS_level);
+  solver_param.mutable_train_state()->set_level(FLAGS_level);//设置训练的level
   for (int i = 0; i < stages.size(); i++) {
     solver_param.mutable_train_state()->add_stage(stages[i]);
   }
 
   // If the gpus flag is not provided, allow the mode and device to be set
   // in the solver prototxt.
-  if (FLAGS_gpu.size() == 0
+  if (FLAGS_gpu.size() == 0//设置模式
       && solver_param.has_solver_mode()
       && solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
       if (solver_param.has_device_id()) {
@@ -225,7 +228,7 @@ int train() {
     solver_param.clear_weights();
     solver_param.add_weights(FLAGS_weights);
   }
-
+//共享指针的拷贝
   shared_ptr<caffe::Solver<float> >
       solver(caffe::SolverRegistry<float>::CreateSolver(solver_param));
 

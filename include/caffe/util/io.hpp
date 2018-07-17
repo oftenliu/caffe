@@ -126,6 +126,12 @@ inline bool ReadImageToDatum(const string& filename, const int label,
   return ReadImageToDatum(filename, label, 0, 0, true, encoding, datum);
 }
 
+
+bool ReadImageToMTCNNDatum(const string& filename, const vector<float>& label,
+  const int height, const int width, const bool is_color,
+  const std::string & encoding, MTCNNDatum* datum);
+
+
 bool DecodeDatumNative(Datum* datum);
 bool DecodeDatum(Datum* datum, bool is_color);
 

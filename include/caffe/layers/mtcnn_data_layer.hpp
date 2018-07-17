@@ -9,11 +9,10 @@
 #include "caffe/blob.hpp"
 #include "caffe/data_transformer.hpp"
 #include "caffe/internal_thread.hpp"
-#include "caffe/data_reader.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/layers/base_data_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
- 
+#include "caffe/util/db.hpp"
 namespace caffe {
  
 /**
@@ -24,26 +23,22 @@ namespace caffe {
 template <typename Dtype>
 class MtcnnDataLayer : public BasePrefetchingDataLayer<Dtype> {
  public:
-  explicit MtcnnDataLayer(const LayerParameter& param)
-      : BasePrefetchingDataLayer<Dtype>(param) {}
+  explicit MtcnnDataLayer(const LayerParameter& param);
   virtual ~MtcnnDataLayer();
   virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
  
   virtual inline const char* type() const { return "MtcnnData"; }
-  virtual inline int ExactNumBottomBlobs() const { return 0; }
-  virtual inline int ExactNumTopBlobs() const { return 2; }
- 
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top);
  protected:
   shared_ptr<Caffe::RNG> prefetch_rng_;
-  virtual void ShuffleImages();
+  //virtual void ShuffleImages();
   virtual void load_batch(Batch<Dtype>* batch);
-  
-  vector<string> lines_;
-  DataReader<MTCNNDatum> reader_;
-  int lines_id_;
-  bool output_pts_;
-  bool output_roi_;
+  void Next();
+  shared_ptr<db::DB> db_;
+  shared_ptr<db::Cursor> cursor_;
+  uint64_t offset_;
 };
  
  
