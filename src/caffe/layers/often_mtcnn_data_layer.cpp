@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "caffe/data_transformer.hpp"
-#include "caffe/layers/mtcnn_data_layer.hpp"
+#include "caffe/layers/often_mtcnn_data_layer.hpp"
 #include "caffe/util/benchmark.hpp"
 
 #include "caffe/blob.hpp"
@@ -22,7 +22,7 @@
 namespace caffe {
 
 template <typename Dtype>
-MtcnnDataLayer<Dtype>::MtcnnDataLayer(const LayerParameter& param)
+OftenMtcnnDataLayer<Dtype>::OftenMtcnnDataLayer(const LayerParameter& param)
 : BasePrefetchingDataLayer<Dtype>(param),
     offset_() {
     db_.reset(db::GetDB(param.data_param().backend()));
@@ -31,12 +31,12 @@ MtcnnDataLayer<Dtype>::MtcnnDataLayer(const LayerParameter& param)
 }
 
 template <typename Dtype>
-MtcnnDataLayer<Dtype>::~MtcnnDataLayer() {
+OftenMtcnnDataLayer<Dtype>::~OftenMtcnnDataLayer() {
     this->StopInternalThread();
 }
 
 template <typename Dtype>
-void MtcnnDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+void OftenMtcnnDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
 
     this->output_labels_ = top.size() > 1;
@@ -98,7 +98,7 @@ void MtcnnDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void MtcnnDataLayer<Dtype>::Forward_cpu(
+void OftenMtcnnDataLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
     Batch<Dtype>* batch = this->prefetch_full_.pop("Data layer prefetch queue empty");
     // Reshape to loaded data.
@@ -130,7 +130,7 @@ void MtcnnDataLayer<Dtype>::Forward_cpu(
 
 
 template<typename Dtype>
-void MtcnnDataLayer<Dtype>::Next() {
+void OftenMtcnnDataLayer<Dtype>::Next() {
   cursor_->Next();
   if (!cursor_->valid()) {
     LOG_IF(INFO, Caffe::root_solver())
@@ -144,7 +144,7 @@ void MtcnnDataLayer<Dtype>::Next() {
 
 // This function is called on prefetch thread
 template<typename Dtype>
-void MtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
+void OftenMtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     CPUTimer batch_timer;
     batch_timer.Start();
     double read_time = 0;
@@ -208,7 +208,7 @@ void MtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 }
 
 
-INSTANTIATE_CLASS(MtcnnDataLayer);
-REGISTER_LAYER_CLASS(MtcnnData);
+INSTANTIATE_CLASS(OftenMtcnnDataLayer);
+REGISTER_LAYER_CLASS(OftenMtcnnData);
 
 }  // namespace caffe

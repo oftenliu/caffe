@@ -21,10 +21,10 @@ namespace caffe {
  * TODO(dox): thorough documentation for Forward and proto params.
  */
 template <typename Dtype>
-class MtcnnDataLayer : public BasePrefetchingDataLayer<Dtype> {
+class OftenMtcnnDataLayer : public BasePrefetchingDataLayer<Dtype> {
  public:
-  explicit MtcnnDataLayer(const LayerParameter& param);
-  virtual ~MtcnnDataLayer();
+  explicit OftenMtcnnDataLayer(const LayerParameter& param);
+  virtual ~OftenMtcnnDataLayer();
   virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
  

@@ -115,7 +115,7 @@ class Blob {
    *        the second to last if index == -2, etc.
    *        Dies on out of range index.
    */
-  inline int CanonicalAxisIndex(int axis_index) const {
+  inline int CanonicalAxisIndex(int axis_index) const {//把正的索引不变，负的改为正的(num_axes() - axis_index)
     CHECK_GE(axis_index, -num_axes())
         << "axis " << axis_index << " out of range for " << num_axes()
         << "-D Blob with shape " << shape_string();

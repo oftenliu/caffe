@@ -12,11 +12,11 @@
 namespace caffe {
 
 /**
- * @brief Computes the classification accuracy for a one-of-many
- *        classification task.
+ * @brief mtcnn分类任务桥接层　top接accuracy 和　softmax loss层　　需要在此层转换label标签　mtcnn正例负例
+ * 标签为(1, -1)－－》(1,0)
  */
 template <typename Dtype>
-class AccuracyLayer : public Layer<Dtype> {
+class OftenMtcnnClassBridgeLayer : public Layer<Dtype> {
  public:
   /**
    * @param param provides AccuracyParameter accuracy_param,
@@ -26,7 +26,7 @@ class AccuracyLayer : public Layer<Dtype> {
    *     correct.  For example, if @f$ k = 5 @f$, a prediction is counted
    *     correct if the correct label is among the top 5 predicted labels.
    */
-  explicit AccuracyLayer(const LayerParameter& param)
+  explicit OftenMtcnnClassBridgeLayer(const LayerParameter& param)
       : Layer<Dtype>(param) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);

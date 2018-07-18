@@ -9,7 +9,7 @@ template <typename Dtype>
 void EuclideanLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   LossLayer<Dtype>::Reshape(bottom, top);
-  CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))
+  CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))//确保有相同维度
       << "Inputs must have the same dimension.";
   diff_.ReshapeLike(*bottom[0]);
 }
@@ -38,9 +38,9 @@ void EuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       caffe_cpu_axpby(
           bottom[i]->count(),              // count
           alpha,                              // alpha
-          diff_.cpu_data(),                   // a
+          diff_.cpu_data(),                   // x
           Dtype(0),                           // beta
-          bottom[i]->mutable_cpu_diff());  // b
+          bottom[i]->mutable_cpu_diff());  // y
     }
   }
 }
