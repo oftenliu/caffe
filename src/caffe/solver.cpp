@@ -208,7 +208,7 @@ void Solver<Dtype>::Step(int iters) {
 
   while (iter_ < stop_iter) {
     // zero-init the params
-    net_->ClearParamDiffs();
+    net_->ClearParamDiffs();////判断条件，是否执行一次所有测试
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
       if (Caffe::root_solver()) {

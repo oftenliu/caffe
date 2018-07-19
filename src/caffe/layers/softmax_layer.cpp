@@ -10,16 +10,16 @@ template <typename Dtype>
 void SoftmaxLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   softmax_axis_ =
-      bottom[0]->CanonicalAxisIndex(this->layer_param_.softmax_param().axis());
+      bottom[0]->CanonicalAxisIndex(this->layer_param_.softmax_param().axis());//bottom[0]:batchsize*classnum softmax_axis_表示classnum　softmax分了多少类，默认值为１
   top[0]->ReshapeLike(*bottom[0]);
-  vector<int> mult_dims(1, bottom[0]->shape(softmax_axis_));
-  sum_multiplier_.Reshape(mult_dims);
-  Dtype* multiplier_data = sum_multiplier_.mutable_cpu_data();
-  caffe_set(sum_multiplier_.count(), Dtype(1), multiplier_data);
+  vector<int> mult_dims(1, bottom[0]->shape(softmax_axis_));//size=1,value=classnum
+  sum_multiplier_.Reshape(mult_dims);//一维　size=classnum
+  Dtype* multiplier_data = sum_multiplier_.mutable_cpu_data();//分配内存
+  caffe_set(sum_multiplier_.count(), Dtype(1), multiplier_data);//乘子初始化为1
   outer_num_ = bottom[0]->count(0, softmax_axis_);//batch_size
-  inner_num_ = bottom[0]->count(softmax_axis_ + 1);
+  inner_num_ = bottom[0]->count(softmax_axis_ + 1);//1 inner_num_的存在可解决多标签问题，对于单一标签问题inner_num_=1
   vector<int> scale_dims = bottom[0]->shape();
-  scale_dims[softmax_axis_] = 1;
+  scale_dims[softmax_axis_] = 1;//batchsize*1
   scale_.Reshape(scale_dims);
 }
 
@@ -29,16 +29,16 @@ void SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
   Dtype* scale_data = scale_.mutable_cpu_data();
-  int channels = bottom[0]->shape(softmax_axis_);
-  int dim = bottom[0]->count() / outer_num_;
-  caffe_copy(bottom[0]->count(), bottom_data, top_data);
+  int channels = bottom[0]->shape(softmax_axis_);//classnum
+  int dim = bottom[0]->count() / outer_num_;//classnum=dim 巧合还是？？
+  caffe_copy(bottom[0]->count(), bottom_data, top_data);//从bottom 复制到 top，以下操作都在top上进行
   // We need to subtract the max to avoid numerical issues, compute the exp,
   // and then normalize.
   for (int i = 0; i < outer_num_; ++i) {
     // initialize scale_data to the first plane
     caffe_copy(inner_num_, bottom_data + i * dim, scale_data);
     for (int j = 0; j < channels; j++) {
-      for (int k = 0; k < inner_num_; k++) {
+      for (int k = 0; k < inner_num_; k++) {//获取最大值
         scale_data[k] = std::max(scale_data[k],
             bottom_data[i * dim + j * inner_num_ + k]);
       }
