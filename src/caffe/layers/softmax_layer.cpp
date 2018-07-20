@@ -43,17 +43,17 @@ void SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             bottom_data[i * dim + j * inner_num_ + k]);
       }
     }
-    // subtraction
+    // subtraction　求幂指数之前　先减去最大值　防止数据溢出 top_data = -1*sum_multiplier_.cpu_data()*scale_data + 1*top_data
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels, inner_num_,
         1, -1., sum_multiplier_.cpu_data(), scale_data, 1., top_data);
     // exponentiation
     caffe_exp<Dtype>(dim, top_data, top_data);
     // sum after exp
     caffe_cpu_gemv<Dtype>(CblasTrans, channels, inner_num_, 1.,
-        top_data, sum_multiplier_.cpu_data(), 0., scale_data);
+        top_data, sum_multiplier_.cpu_data(), 0., scale_data);//求和
     // division
     for (int j = 0; j < channels; j++) {
-      caffe_div(inner_num_, top_data, scale_data, top_data);
+      caffe_div(inner_num_, top_data, scale_data, top_data);//计算概率
       top_data += inner_num_;
     }
   }

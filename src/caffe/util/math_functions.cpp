@@ -19,7 +19,20 @@ void caffe_cpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B,
       ldb, beta, C, N);
 }
-
+/*
+* caffe_cpu_gemm 矩阵乘矩阵
+* Brief: C=alpha*A*B+beta*C 
+* param A,B,C:输入矩阵（一维数组格式） 
+* param TransA, TransB：是否要对A和B做转置操作（CblasTrans CblasNoTrans） 
+* param M： A、C 的行数 
+* param N： B、C 的列数 
+* param K： A 的列数， B 的行数
+* param alpha:系数
+* param beta:系数
+* lda ： A的列数（不做转置）/ 行数（做转置） 
+* ldb： B的列数（不做转置）/ 行数（做转置）
+* CblasRowMajor :数据是行主序的（二维数据也是用一维数组储存的） 
+*/
 template<>
 void caffe_cpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
     const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
@@ -31,6 +44,14 @@ void caffe_cpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
       ldb, beta, C, N);
 }
 
+/*
+*caffe_cpu_gemv 矩阵乘向量
+*breif： y=alpha*A*x+beta*y 
+*param X,Y:向量，A 是矩阵 
+*paramM：A 的行数 
+*paramN：A 的列数 
+*param cblas_sgemv 中的 参数1 表示对X和Y的每个元素都进行操作
+*/
 template <>
 void caffe_cpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
     const int N, const float alpha, const float* A, const float* x,
@@ -45,6 +66,12 @@ void caffe_cpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   cblas_dgemv(CblasRowMajor, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
 }
 
+
+
+/*
+功能： Y=alpha*X+Y 
+N：为X和Y中element的个数
+*/
 template <>
 void caffe_axpy<float>(const int N, const float alpha, const float* X,
     float* Y) { cblas_saxpy(N, alpha, X, 1, Y, 1); }
@@ -104,6 +131,11 @@ template void caffe_copy<unsigned int>(const int N, const unsigned int* X,
 template void caffe_copy<float>(const int N, const float* X, float* Y);
 template void caffe_copy<double>(const int N, const double* X, double* Y);
 
+
+/*
+* X = alpha*X 
+* N： X中element的个数
+*/
 template <>
 void caffe_scal<float>(const int N, const float alpha, float *X) {
   cblas_sscal(N, alpha, X, 1);

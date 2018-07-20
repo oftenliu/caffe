@@ -125,16 +125,16 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const Dtype* prob_data = prob_.cpu_data();
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
-    int dim = prob_.count() / outer_num_;
+    int dim = prob_.count() / outer_num_;//　classnum
     int count = 0;
     for (int i = 0; i < outer_num_; ++i) {
       for (int j = 0; j < inner_num_; ++j) {
         const int label_value = static_cast<int>(label[i * inner_num_ + j]);
-        if (has_ignore_label_ && label_value == ignore_label_) {
+        if (has_ignore_label_ && label_value == ignore_label_) {//如果为忽略标签，则偏导为0
           for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
             bottom_diff[i * dim + c * inner_num_ + j] = 0;
           }
-        } else {
+        } else {//计算偏导，预测正确的bottom_diff = f(y_k) - 1，其它不变
           bottom_diff[i * dim + label_value * inner_num_ + j] -= 1;
           ++count;
         }
@@ -143,6 +143,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     // Scale gradient
     Dtype loss_weight = top[0]->cpu_diff()[0] /
                         get_normalizer(normalization_, count);
+    // bottom_diff = loss_weight*bottom_diff
     caffe_scal(prob_.count(), loss_weight, bottom_diff);
   }
 }
