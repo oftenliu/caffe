@@ -107,17 +107,17 @@ void SGDSolver<Dtype>::ClipGradients() {
 
 template <typename Dtype>
 void SGDSolver<Dtype>::ApplyUpdate() {
-  Dtype rate = GetLearningRate();
+  Dtype rate = GetLearningRate();// // GetLearningRate根据设置的lr_policy来计算当前迭代的learning rate的值
   if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
     LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << this->iter_
         << ", lr = " << rate;
   }
-  ClipGradients();
+  ClipGradients();//// 避免梯度爆炸，如果梯度的二范数超过了某个数值则进行scale操作，将梯度减小
   for (int param_id = 0; param_id < this->net_->learnable_params().size();
        ++param_id) {
-    Normalize(param_id);
-    Regularize(param_id);
-    ComputeUpdateValue(param_id, rate);
+    Normalize(param_id);// // 将第param_id个参数的梯度除以iter_size，这一步的作用是保证实际的batch_size=iter_size*设置的batch_size
+    Regularize(param_id);//// 将正则化部分的梯度降入到每个参数的梯度中 
+    ComputeUpdateValue(param_id, rate);//// 计算SGD算法的梯度(momentum等)
   }
   this->net_->Update();
 

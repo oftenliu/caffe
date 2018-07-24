@@ -82,7 +82,8 @@ class OftenMtcnnClassBridgeLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-  int label_axis_, outer_num_, inner_num_;
+  int batch_size;
+  int channel;
 
   int top_k_;
 

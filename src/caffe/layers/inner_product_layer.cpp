@@ -95,7 +95,10 @@ void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
   }
 }
-
+//全连接层
+/*K_:前一层神经元个数
+* N_:输出神经元个数
+* M_:batch_size*/
 template <typename Dtype>
 void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
