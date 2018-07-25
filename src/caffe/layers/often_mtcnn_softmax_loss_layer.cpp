@@ -2,10 +2,17 @@
 #include <cfloat>
 #include <vector>
 
-#include "caffe/layers/softmax_loss_layer.hpp"
+#include "caffe/layers/often_mtcnn_softmax_loss_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
 namespace caffe {
+//降序排列
+template <typename Dtype>
+bool compGreater(const Dtype &a,const Dtype &b)
+{
+    return a>b;
+}
+
 
 template <typename Dtype>
 void OftenMtcnnSoftmaxLossLayer<Dtype>::LayerSetUp(
@@ -41,9 +48,9 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Reshape(
   softmax_layer_->Reshape(softmax_bottom_vec_, softmax_top_vec_);
   softmax_axis_ =
       bottom[0]->CanonicalAxisIndex(this->layer_param_.softmax_param().axis());
-  outer_num_ = bottom[0]->count(0, softmax_axis_);
-  inner_num_ = bottom[0]->count(softmax_axis_ + 1);
-  CHECK_EQ(outer_num_ * inner_num_, bottom[1]->count())
+  batch_size = bottom[0]->count(0, softmax_axis_);
+  channel = bottom[0]->count(softmax_axis_);
+  CHECK_EQ(batch_size, bottom[1]->count())
       << "Number of labels must match number of predictions; "
       << "e.g., if softmax axis == 1 and prediction shape is (N, C, H, W), "
       << "label count (number of labels) must be N*H*W, "
@@ -52,6 +59,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Reshape(
     // softmax output
     top[1]->ReshapeLike(*bottom[0]);
   }
+  loss_buffer_.resize(bottom[1]->count(0));
 }
 
 template <typename Dtype>
@@ -60,17 +68,17 @@ Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_normalizer(
   Dtype normalizer;
   switch (normalization_mode) {
     case LossParameter_NormalizationMode_FULL:
-      normalizer = Dtype(outer_num_ * inner_num_);
+      normalizer = Dtype(batch_size);
       break;
     case LossParameter_NormalizationMode_VALID:
       if (valid_count == -1) {
-        normalizer = Dtype(outer_num_ * inner_num_);
+        normalizer = Dtype(batch_size);
       } else {
         normalizer = Dtype(valid_count);
       }
       break;
     case LossParameter_NormalizationMode_BATCH_SIZE:
-      normalizer = Dtype(outer_num_);
+      normalizer = Dtype(batch_size);
       break;
     case LossParameter_NormalizationMode_NONE:
       normalizer = Dtype(1);
@@ -84,6 +92,16 @@ Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_normalizer(
   return std::max(Dtype(1.0), normalizer);
 }
 
+
+template <typename Dtype>
+Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_top70Loss(vector<Dtype> vecLoss)
+{
+    sort(vecLoss.begin(), vecLoss.end(),compGreater<Dtype>);//升序排列
+    int top70 = vecLoss.size()*0.7;
+
+    return vecLoss[top70];
+}
+
 template <typename Dtype>
 void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
@@ -91,27 +109,37 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype* prob_data = prob_.cpu_data();
   const Dtype* label = bottom[1]->cpu_data();
-  int dim = prob_.count() / outer_num_;
   int count = 0;
   Dtype loss = 0;
-  for (int i = 0; i < outer_num_; ++i) {
-    for (int j = 0; j < inner_num_; j++) {
-      const int label_value = static_cast<int>(label[i * inner_num_ + j]);
+  Dtype per_loss = 0;
+  for (int i = 0; i < batch_size; ++i) {
+      const int label_value = static_cast<int>(label[i]);
       if (label_value == -1) {
+        loss_buffer_[i] = 0;
         continue;
       }
       DCHECK_GE(label_value, 0);
       DCHECK_LT(label_value, prob_.shape(softmax_axis_));
-      loss -= log(std::max(prob_data[i * dim + label_value * inner_num_ + j],
-                           Dtype(FLT_MIN)));
+      per_loss = log(std::max(prob_data[i * channel + label_value],Dtype(FLT_MIN)));     
+      loss -= per_loss;
+      loss_buffer_[i] = per_loss;
       ++count;
-    }
   }
+
+
   top[0]->mutable_cpu_data()[0] = loss / get_normalizer(normalization_, count);
+  top70Loss = get_top70Loss(loss_buffer_);
+
   if (top.size() == 2) {
     top[1]->ShareData(prob_);
   }
+
+
 }
+
+
+
+
 
 template <typename Dtype>
 void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
@@ -125,20 +153,21 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
     const Dtype* prob_data = prob_.cpu_data();
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
-    int dim = prob_.count() / outer_num_;//　classnum
     int count = 0;
-    for (int i = 0; i < outer_num_; ++i) {
-      for (int j = 0; j < inner_num_; ++j) {
-        const int label_value = static_cast<int>(label[i * inner_num_ + j]);
-        if (label_value == -1) {//如果为忽略标签，则偏导为0
-          for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
-            bottom_diff[i * dim + c * inner_num_ + j] = 0;
+    for (int i = 0; i < batch_size; ++i) {
+        const int label_value = static_cast<int>(label[i]);
+        if (label_value == -1) {//如果为忽略标签，不回传梯度
+          for (int c = 0; c < channel; ++c) {
+            bottom_diff[i * channel + c ] = 0;
           }
         } else {//计算偏导，预测正确的bottom_diff = f(y_k) - 1，其它不变
-          bottom_diff[i * dim + label_value * inner_num_ + j] -= 1;
+            if (loss_buffer_[i] >= top70Loss){
+
+
+            }
+          bottom_diff[i * channel + label_value] -= 1;
           ++count;
         }
-      }
     }
     // Scale gradient
     Dtype loss_weight = top[0]->cpu_diff()[0] /

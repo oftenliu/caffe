@@ -43,7 +43,6 @@ template <typename Dtype>
 void OftenMtcnnClassBridgeLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   //前向传播　label=-1的正例不往前传播
-  Dtype* bottom_data = bottom[0]->cpu_data();
   const Dtype* bottom_data = bottom[0]->cpu_data();
   const Dtype* bottom_labels = bottom[1]->cpu_data();
   //初始化top0
@@ -61,7 +60,7 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Forward_cpu(
     {
         for (int j = 0; j < channel; j++)
         {
-            top_data[i * channel + j] = bottom_data[i * channel + j ]);
+            top_data[i * channel + j] = bottom_data[i * channel + j ];
         }
         top_label[i] = bottom_labels[i];
     }
@@ -86,22 +85,22 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
 
     for (int i = 0; i < batch_size; i++)
     {
-        if (label[i] ＝= -1)//传递labels 值为０和１的样本数
+        if (label[i] == -1)//传递labels 值为０和１的样本数
         {
             for (int j = 0; j < channel; j++)
             {
-                bottom_diff[i * channel + j] = ０;
+                bottom_diff[i * channel + j] = 0;
             }
         }
-  　}
+    }
 
+    }
 }
-
 #ifdef CPU_ONLY
-STUB_GPU(SoftmaxWithLossLayer);
+STUB_GPU(OftenMtcnnClassBridgeLayer);
 #endif
 
-INSTANTIATE_CLASS(SoftmaxWithLossLayer);
-REGISTER_LAYER_CLASS(SoftmaxWithLoss);
+INSTANTIATE_CLASS(OftenMtcnnClassBridgeLayer);
+REGISTER_LAYER_CLASS(OftenMtcnnClassBridge);
 
 }  // namespace caffe

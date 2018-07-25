@@ -58,7 +58,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
-  virtual inline const char* type() const { return "SoftmaxWithLoss"; }
+  virtual inline const char* type() const { return "OftenMtcnnSoftmaxLoss"; }
   virtual inline int ExactNumTopBlobs() const { return -1; }
   virtual inline int MinTopBlobs() const { return 1; }
   virtual inline int MaxTopBlobs() const { return 2; }
@@ -106,11 +106,14 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   /// all outputs are assumed to be valid.
   virtual Dtype get_normalizer(
       LossParameter_NormalizationMode normalization_mode, int valid_count);
+      
+  virtual Dtype get_top70Loss(vector<Dtype> vecLoss );    
 
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<Layer<Dtype> > softmax_layer_;
   /// prob stores the output probability predictions from the SoftmaxLayer.
   Blob<Dtype> prob_;
+
   /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
@@ -122,7 +125,9 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   /// How to normalize the output loss.
   LossParameter_NormalizationMode normalization_;
 
-  int softmax_axis_, outer_num_, inner_num_;
+  int softmax_axis_, batch_size, channel;
+  vector<Dtype> loss_buffer_;
+  Dtype top70Loss;
 };
 
 }  // namespace caffe

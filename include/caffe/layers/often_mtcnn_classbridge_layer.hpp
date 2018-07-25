@@ -33,7 +33,7 @@ class OftenMtcnnClassBridgeLayer : public Layer<Dtype> {
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
-  virtual inline const char* type() const { return "Accuracy"; }
+  virtual inline const char* type() const { return "OftenMtcnnClassBridge"; }
   virtual inline int ExactNumBottomBlobs() const { return 2; }
 
   // If there are two top blobs, then the second blob will contain
@@ -72,13 +72,8 @@ class OftenMtcnnClassBridgeLayer : public Layer<Dtype> {
       const vector<Blob<Dtype>*>& top);
 
 
-  /// @brief Not implemented -- AccuracyLayer cannot be used as a loss.loss不反向传播
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
-    for (int i = 0; i < propagate_down.size(); ++i) {
-      if (propagate_down[i]) { NOT_IMPLEMENTED; }
-    }
-  }
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
@@ -92,7 +87,7 @@ class OftenMtcnnClassBridgeLayer : public Layer<Dtype> {
   /// The label indicating that an instance should be ignored.
   int ignore_label_;
   /// Keeps counts of the number of samples per class.
-  Blob<Dtype> nums_buffer_;
+  
 };
 
 }  // namespace caffe
