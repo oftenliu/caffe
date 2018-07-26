@@ -40,6 +40,17 @@ namespace caffe {
  *        \frac{-1}{N} \sum\limits_{n=1}^N \log(\hat{p}_{n,l_n})
  *      @f$, for softmax output class probabilites @f$ \hat{p} @f$
  */
+
+template <typename Dtype>
+struct Loss_Buffer
+{
+public:
+    Dtype loss;
+    int loss_index;
+    int index;
+
+};
+
 template <typename Dtype>
 class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
  public:
@@ -107,7 +118,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   virtual Dtype get_normalizer(
       LossParameter_NormalizationMode normalization_mode, int valid_count);
       
-  virtual Dtype get_top70Loss(vector<Dtype> vecLoss );    
+  virtual Dtype SortLoss(vector<Loss_Buffer<Dtype>> &vecLoss);    
 
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<Layer<Dtype> > softmax_layer_;
@@ -126,8 +137,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   LossParameter_NormalizationMode normalization_;
 
   int softmax_axis_, batch_size, channel;
-  vector<Dtype> loss_buffer_;
-  Dtype top70Loss;
+  vector<Loss_Buffer<Dtype>> loss_buffer_;
 };
 
 }  // namespace caffe

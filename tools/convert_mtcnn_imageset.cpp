@@ -41,14 +41,14 @@ DEFINE_string(encode_type, "",
 void split(const string& s, char delim,std::vector<string>& v) {
     auto i = 0;
     auto pos = s.find(delim);
+
     while (pos != string::npos) {
       v.push_back(s.substr(i, pos-i));
       i = ++pos;
       pos = s.find(delim, pos);
-
-      if (pos == string::npos)
-         v.push_back(s.substr(i, s.length()));
     }
+    if (pos == string::npos)
+      v.push_back(s.substr(i, s.length()));
 }
 
 
@@ -89,11 +89,11 @@ int main(int argc, char** argv) {
     pos = line.find_first_of(' ');
     strLabels = line.substr(pos + 1).c_str();
     std::vector<std::string> strLabelVec;
-	split(strLabels,' ',strLabelVec);
-    std::vector<float> fLabelVec;
+	  split(strLabels,' ',strLabelVec);
+    std::vector<float> fLabelVec(5,0);
     for (int i = 0; i< strLabelVec.size(); i++)
     {
-      fLabelVec.push_back(atof(strLabelVec[i].c_str()));
+      fLabelVec[i] = atof(strLabelVec[i].c_str());
     }
     lines.push_back(std::make_pair(line.substr(0, pos), fLabelVec));
   }
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
   scoped_ptr<db::DB> db(db::GetDB(FLAGS_backend));
   db->Open(argv[3], db::NEW);
   scoped_ptr<db::Transaction> txn(db->NewTransaction());
-
+    LOG(INFO) << "23545453545."; 
   // Storing to db
   std::string root_folder(argv[1]);
   MTCNNDatum mtcnndatum;

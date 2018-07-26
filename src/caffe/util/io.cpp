@@ -155,6 +155,11 @@ bool ReadImageToMTCNNDatum(const string& filename, const vector<float>& label,
     rois->set_ymin(label[2]);
     rois->set_xmax(label[3]);
     rois->set_ymax(label[4]);
+    DLOG(INFO) << "top_roi xmin: " << label[1];
+    DLOG(INFO) << "top_roi ymin: " << label[2];
+    DLOG(INFO) << "top_roi xmax: " << label[3];
+    DLOG(INFO) << "top_roi ymax: " << label[4];
+    DLOG(INFO) << "next sample next sample " ;     
   }
   return succ;
 }

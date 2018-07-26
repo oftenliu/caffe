@@ -512,6 +512,11 @@ message LossParameter {
   optional bool normalize = 2;
 }
 
+
+
+
+
+
 // Messages that store parameters used by individual layer types follow, in
 // alphabetical order.
 

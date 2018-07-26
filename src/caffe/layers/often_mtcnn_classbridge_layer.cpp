@@ -42,7 +42,7 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Reshape(
 template <typename Dtype>
 void OftenMtcnnClassBridgeLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  //前向传播　label=-1的正例不往前传播
+  //前向传播　label=-1的不往前传播
   const Dtype* bottom_data = bottom[0]->cpu_data();
   const Dtype* bottom_labels = bottom[1]->cpu_data();
   //初始化top0
@@ -56,15 +56,15 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Forward_cpu(
 
   for (int i = 0; i < batch_size; i++)
   {
-    if (bottom_labels[i] != -1)//传递labels 值为０和１的样本数
+    if (bottom_labels[i] != -1)//传递labels 值为0和１的样本数
     {
         for (int j = 0; j < channel; j++)
         {
             top_data[i * channel + j] = bottom_data[i * channel + j ];
         }
-        top_label[i] = bottom_labels[i];
+        
     }
-
+    top_label[i] = bottom_labels[i];
 
   }
 

@@ -1,0 +1,4 @@
+set args train --solver=examples/mtcnn/solver.prototxt
+
+b src/caffe/layers/often_mtcnn_softmax_loss_layer.cpp:140
+b src/caffe/layers/often_mtcnn_softmax_loss_layer.cpp:157

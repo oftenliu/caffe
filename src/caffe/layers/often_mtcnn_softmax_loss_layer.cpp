@@ -6,13 +6,18 @@
 #include "caffe/util/math_functions.hpp"
 
 namespace caffe {
-//降序排列
+
 template <typename Dtype>
-bool compGreater(const Dtype &a,const Dtype &b)
+bool compGreaterByLoss(const Loss_Buffer<Dtype> &a,const Loss_Buffer<Dtype> &b)
 {
-    return a>b;
+    return a.loss<b.loss;
 }
 
+template <typename Dtype>
+bool compGreaterByIndex(const Loss_Buffer<Dtype> &a,const Loss_Buffer<Dtype> &b)
+{
+    return a.index<b.index;
+}
 
 template <typename Dtype>
 void OftenMtcnnSoftmaxLossLayer<Dtype>::LayerSetUp(
@@ -94,12 +99,17 @@ Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_normalizer(
 
 
 template <typename Dtype>
-Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_top70Loss(vector<Dtype> vecLoss)
+Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::SortLoss(vector<Loss_Buffer<Dtype>> &vecLoss)
 {
-    sort(vecLoss.begin(), vecLoss.end(),compGreater<Dtype>);//升序排列
-    int top70 = vecLoss.size()*0.7;
-
-    return vecLoss[top70];
+    sort(vecLoss.begin(), vecLoss.end(),compGreaterByLoss<Dtype>);//升序排列
+    int j = 0;
+    for (int i = 0; i < vecLoss.size();i++)
+    {
+      vecLoss[i].loss_index = j;//loss按序号重新赋值　防止loss值相同导致后续产生不必要的bug
+      j++;
+    }
+    sort(vecLoss.begin(), vecLoss.end(),compGreaterByIndex<Dtype>);//升序排列
+    return 0;
 }
 
 template <typename Dtype>
@@ -115,21 +125,23 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
   for (int i = 0; i < batch_size; ++i) {
       const int label_value = static_cast<int>(label[i]);
       if (label_value == -1) {
-        loss_buffer_[i] = 0;
+        loss_buffer_[i].loss = 0;
+        loss_buffer_[i].index = i;
         continue;
       }
-      DCHECK_GE(label_value, 0);
+      DCHECK_GE(label_value, -1);
       DCHECK_LT(label_value, prob_.shape(softmax_axis_));
-      per_loss = log(std::max(prob_data[i * channel + label_value],Dtype(FLT_MIN)));     
-      loss -= per_loss;
-      loss_buffer_[i] = per_loss;
+      per_loss = -log(std::max(prob_data[i * channel + label_value],Dtype(FLT_MIN)));     
+      loss += per_loss;
+      loss_buffer_[i].loss = per_loss;
+      loss_buffer_[i].index = i;
       ++count;
   }
 
 
   top[0]->mutable_cpu_data()[0] = loss / get_normalizer(normalization_, count);
-  top70Loss = get_top70Loss(loss_buffer_);
-
+  SortLoss(loss_buffer_);
+  LOG(INFO) << "Loss: " << top[0]->mutable_cpu_data()[0];
   if (top.size() == 2) {
     top[1]->ShareData(prob_);
   }
@@ -154,6 +166,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
     int count = 0;
+    int top70Loss = batch_size * 0.7;
     for (int i = 0; i < batch_size; ++i) {
         const int label_value = static_cast<int>(label[i]);
         if (label_value == -1) {//如果为忽略标签，不回传梯度
@@ -161,12 +174,16 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
             bottom_diff[i * channel + c ] = 0;
           }
         } else {//计算偏导，预测正确的bottom_diff = f(y_k) - 1，其它不变
-            if (loss_buffer_[i] >= top70Loss){
-
-
+            if (loss_buffer_[i].loss_index >= top70Loss){//正负样本中损失前70%的回传梯度
+                bottom_diff[i * channel + label_value] -= 1;
+                ++count;
             }
-          bottom_diff[i * channel + label_value] -= 1;
-          ++count;
+            else
+            {
+              for (int c = 0; c < channel; ++c) {
+                bottom_diff[i * channel + c ] = 0;
+              }
+            }
         }
     }
     // Scale gradient

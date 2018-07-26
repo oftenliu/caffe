@@ -2,13 +2,13 @@
 #include <utility>
 #include <vector>
 
-#include "caffe/layers/accuracy_layer.hpp"
+#include "caffe/layers/often_mtcnn_accuracy_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
 namespace caffe {
 
 template <typename Dtype>
-void AccuracyLayer<Dtype>::LayerSetUp(
+void OftenMtcnnAccuracyLayer<Dtype>::LayerSetUp(
   const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   top_k_ = this->layer_param_.accuracy_param().top_k();
 
@@ -20,7 +20,7 @@ void AccuracyLayer<Dtype>::LayerSetUp(
 }
 
 template <typename Dtype>
-void AccuracyLayer<Dtype>::Reshape(
+void OftenMtcnnAccuracyLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   CHECK_LE(top_k_, bottom[0]->count() / bottom[1]->count())
       << "top_k must be less than or equal to the number of classes.";
@@ -45,7 +45,7 @@ void AccuracyLayer<Dtype>::Reshape(
 }
 
 template <typename Dtype>
-void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void OftenMtcnnAccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   Dtype accuracy = 0;
   const Dtype* bottom_data = bottom[0]->cpu_data();
@@ -61,10 +61,10 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     for (int j = 0; j < inner_num_; ++j) {
       const int label_value =
           static_cast<int>(bottom_label[i * inner_num_ + j]);
-      if (has_ignore_label_ && label_value == ignore_label_) {
+      if (label_value == -1) {
         continue;
       }
-      DCHECK_GE(label_value, 0);
+      DCHECK_GE(label_value, -1);
       DCHECK_LT(label_value, num_labels);
       if (top.size() > 1) ++nums_buffer_.mutable_cpu_data()[label_value];
       const Dtype prob_of_true_class = bottom_data[i * dim
@@ -85,7 +85,7 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     }
   }
 
-   LOG(INFO) << "Accuracy: " << accuracy;
+  //LOG(INFO) << "Accuracy: " << accuracy;
   top[0]->mutable_cpu_data()[0] = (count == 0) ? 0 : (accuracy / count);
   if (top.size() > 1) {
     for (int i = 0; i < top[1]->count(); ++i) {
@@ -98,10 +98,10 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(AccuracyLayer);
+STUB_GPU(OftenMtcnnAccuracyLayer);
 #endif
 
-INSTANTIATE_CLASS(AccuracyLayer);
-REGISTER_LAYER_CLASS(Accuracy);
+INSTANTIATE_CLASS(OftenMtcnnAccuracyLayer);
+REGISTER_LAYER_CLASS(OftenMtcnnAccuracy);
 
 }  // namespace caffe

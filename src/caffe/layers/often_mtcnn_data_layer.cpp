@@ -106,7 +106,7 @@ void OftenMtcnnDataLayer<Dtype>::Forward_cpu(
     // Copy the data
     caffe_copy(batch->data_.count(), batch->data_.cpu_data(),
         top[0]->mutable_cpu_data());
-    DLOG(INFO) << "Prefetch copied";
+    //DLOG(INFO) << "Prefetch copied";
 
     //label
     top[1]->ReshapeLike(batch->label_);
@@ -195,6 +195,12 @@ void OftenMtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         top_roi[item_id+1] = datum.rois().ymin();
         top_roi[item_id+2] = datum.rois().xmax() - datum.rois().xmin() + 1;
         top_roi[item_id+3] = datum.rois().ymax() - datum.rois().ymin() + 1;
+
+        // DLOG(INFO) << "top_roi xmin: " << top_roi[item_id+0];
+        // DLOG(INFO) << "top_roi ymin: " << top_roi[item_id+1];
+        // DLOG(INFO) << "top_roi xmax: " << top_roi[item_id+2];
+        // DLOG(INFO) << "top_roi ymax: " << top_roi[item_id+3];
+        
         trans_time += timer.MicroSeconds();
         Next();
 
@@ -202,9 +208,9 @@ void OftenMtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     timer.Stop();
     batch_timer.Stop();
-    DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
-    DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
-    DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
+    //DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+    //DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
+    //DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
 }
 
 
