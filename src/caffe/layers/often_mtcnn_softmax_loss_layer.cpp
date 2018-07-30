@@ -64,6 +64,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Reshape(
     // softmax output
     top[1]->ReshapeLike(*bottom[0]);
   }
+  nValidLable = 0;
   loss_buffer_.resize(bottom[1]->count(0));
 }
 
@@ -102,11 +103,9 @@ template <typename Dtype>
 Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::SortLoss(vector<Loss_Buffer<Dtype>> &vecLoss)
 {
     sort(vecLoss.begin(), vecLoss.end(),compGreaterByLoss<Dtype>);//升序排列
-    int j = 0;
     for (int i = 0; i < vecLoss.size();i++)
     {
-      vecLoss[i].loss_index = j;//loss按序号重新赋值　防止loss值相同导致后续产生不必要的bug
-      j++;
+      vecLoss[i].loss = i;//loss按序号重新赋值　防止loss值相同导致后续产生不必要的bug
     }
     sort(vecLoss.begin(), vecLoss.end(),compGreaterByIndex<Dtype>);//升序排列
     return 0;
@@ -119,7 +118,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype* prob_data = prob_.cpu_data();
   const Dtype* label = bottom[1]->cpu_data();
-  int count = 0;
+  nValidLable = 0;
   Dtype loss = 0;
   Dtype per_loss = 0;
   for (int i = 0; i < batch_size; ++i) {
@@ -135,22 +134,19 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
       loss += per_loss;
       loss_buffer_[i].loss = per_loss;
       loss_buffer_[i].index = i;
-      ++count;
+      ++nValidLable;
   }
 
 
-  top[0]->mutable_cpu_data()[0] = loss / get_normalizer(normalization_, count);
+  top[0]->mutable_cpu_data()[0] = loss / get_normalizer(normalization_, nValidLable);
   SortLoss(loss_buffer_);
-  LOG(INFO) << "Loss: " << top[0]->mutable_cpu_data()[0];
+  //LOG(INFO) << "Loss: " << top[0]->mutable_cpu_data()[0];
   if (top.size() == 2) {
     top[1]->ShareData(prob_);
   }
 
 
 }
-
-
-
 
 
 template <typename Dtype>
@@ -166,7 +162,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
     int count = 0;
-    int top70Loss = batch_size * 0.7;
+    int top70Loss = nValidLable * 0.7;//使用正负样本的70%回传梯度
     for (int i = 0; i < batch_size; ++i) {
         const int label_value = static_cast<int>(label[i]);
         if (label_value == -1) {//如果为忽略标签，不回传梯度
@@ -174,7 +170,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
             bottom_diff[i * channel + c ] = 0;
           }
         } else {//计算偏导，预测正确的bottom_diff = f(y_k) - 1，其它不变
-            if (loss_buffer_[i].loss_index >= top70Loss){//正负样本中损失前70%的回传梯度
+            if (loss_buffer_[i].loss>= top70Loss){//正负样本中损失前70%的回传梯度
                 bottom_diff[i * channel + label_value] -= 1;
                 ++count;
             }

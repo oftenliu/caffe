@@ -1,5 +1,5 @@
-#ifndef CAFFE_SOFTMAX_WITH_LOSS_LAYER_HPP_
-#define CAFFE_SOFTMAX_WITH_LOSS_LAYER_HPP_
+#ifndef CAFFE_MTCNN_SOFTMAX_WITH_LOSS_LAYER_HPP_
+#define CAFFE_MTCNN_SOFTMAX_WITH_LOSS_LAYER_HPP_
 
 #include <vector>
 
@@ -46,7 +46,6 @@ struct Loss_Buffer
 {
 public:
     Dtype loss;
-    int loss_index;
     int index;
 
 };
@@ -135,7 +134,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   int ignore_label_;
   /// How to normalize the output loss.
   LossParameter_NormalizationMode normalization_;
-
+  int nValidLable;  
   int softmax_axis_, batch_size, channel;
   vector<Loss_Buffer<Dtype>> loss_buffer_;
 };

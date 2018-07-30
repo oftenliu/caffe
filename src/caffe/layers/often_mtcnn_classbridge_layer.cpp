@@ -79,8 +79,9 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
+    const Dtype* top_diff = top[0]->cpu_diff();  
     Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
-
+    caffe_copy(top[0]->count(), top_diff, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
 
     for (int i = 0; i < batch_size; i++)

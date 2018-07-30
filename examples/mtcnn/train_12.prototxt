@@ -7,7 +7,7 @@ layer {
   top: "roi"
   data_param {
     source: "examples/mtcnn/pnet_db"
-    batch_size: 32
+    batch_size: 384
     backend: LMDB
   }
 }
@@ -168,44 +168,44 @@ layer {
   }
 }
 
-#layer {
-#  name: "conv4-2"
-#  type: "Convolution"
-#  bottom: "conv3"
-#  top: "conv4-2"
-#  param {
-#    lr_mult: 1 #权重的学习率 该层lr=lr_mult*base_lr
-#    decay_mult: 1 #权重的衰减值
-#  }
-#  param {
-#    lr_mult: 2
-#    decay_mult: 0
-#  }
-#  convolution_param {
-#    num_output: 4
-#    kernel_size: 1
-#    stride: 1
-#     weight_filler {
-#      type: "xavier"
-#	}
-#    bias_filler {
-#      type: "constant"
-#      value: 0
-#    }
-#  }
-#}
-#layer {
-#  name: "roi_loss"
-#  type: "Python"
-#  bottom: "conv4-2"
-#  bottom: "roi"
-#  top: "roi_loss"
-#  loss_weight: 0.5
-#  python_param {
-#    module: "pythonLayer"
-#    layer:  "regression_Layer"
-#  }
-#}
+layer {
+  name: "conv4-2"
+  type: "Convolution"
+  bottom: "conv3"
+  top: "conv4-2"
+  param {
+    lr_mult: 1 #权重的学习率 该层lr=lr_mult*base_lr
+    decay_mult: 1 #权重的衰减值
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 4
+    kernel_size: 1
+    stride: 1
+     weight_filler {
+      type: "xavier"
+	}
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "roi_loss"
+  type: "OftenMtcnnEuclideanLoss"
+  bottom: "conv4-2"
+  bottom: "roi"
+  bottom: "label"
+  top: "roi_loss"
+  loss_weight: 0.5
+  propagate_down: 1
+  propagate_down: 0
+  propagate_down: 0 
+}
 
 
 

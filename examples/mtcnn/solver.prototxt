@@ -1,16 +1,16 @@
 net : "examples/mtcnn/train_12.prototxt"
 # The base learning rate, momentum and the weight decay of the network. 984050
-base_lr: 0.00001
+base_lr: 0.001
 momentum: 0.9
 weight_decay: 0.004
 # The learning rate policy
 lr_policy: "multistep"
 gamma: 0.1
-stepvalue: 17000
-stepvalue: 39000
-stepvalue: 55580 
+stepvalue: 16000
+stepvalue: 36000
+stepvalue: 51500 
 display: 200
-max_iter: 85000
+max_iter: 80000
 snapshot: 10000
 snapshot_prefix: "./models"
 solver_mode: CPU
