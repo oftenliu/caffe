@@ -49,10 +49,26 @@ message MTCNNBBox {
   optional float ymax = 4;
 }
 
+
+// add by often for mtcnn 
+
+message MTCNNLandMark {
+  optional float xlefteye = 1;
+  optional float ylefteye = 2;
+  optional float xrighteye = 3;
+  optional float yrighteye = 4;
+  optional float xnose = 5;
+  optional float ynose = 6;
+  optional float xleftmouth = 7;
+  optional float yleftmouth = 8;
+  optional float xrightmouth = 9;
+  optional float yrightmouth = 10; 
+}
+
 message MTCNNDatum {
   optional Datum datum = 1;
   optional MTCNNBBox rois = 2;//人脸目标框
-  //repeated float pts = 3;     //关键点坐标　
+  optional MTCNNLandMark landmark = 3;     //关键点坐标　
 }
 
 
@@ -440,7 +456,15 @@ message LayerParameter {
 
   // added by often
   optional MTCNNDataParameter mtcnn_data_param = 148;
+  optional MtcnnLossParameter mtcnn_loss_param = 149;
+
 }
+
+
+message MtcnnLossParameter {
+  optional float drop_loss_rate = 1 [default = 0]; // online hard mining drop rate
+}
+
 
 
 message MTCNNDataParameter{

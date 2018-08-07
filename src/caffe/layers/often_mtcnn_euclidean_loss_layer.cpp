@@ -42,8 +42,10 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>
             Dtype dot = caffe_cpu_dot(channel, diff + i * channel, diff + i * channel);
             loss += dot;
             valid_label_size++;
+            //DLOG(INFO) << "loss: " << dot;
         }
     }
+    //DLOG(INFO) << "valid_label_size: " << valid_label_size;
     top[0]->mutable_cpu_data()[0] = loss / valid_label_size / Dtype(2);
 }
 

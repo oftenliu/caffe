@@ -155,11 +155,19 @@ bool ReadImageToMTCNNDatum(const string& filename, const vector<float>& label,
     rois->set_ymin(label[2]);
     rois->set_xmax(label[3]);
     rois->set_ymax(label[4]);
-    DLOG(INFO) << "top_roi xmin: " << label[1];
-    DLOG(INFO) << "top_roi ymin: " << label[2];
-    DLOG(INFO) << "top_roi xmax: " << label[3];
-    DLOG(INFO) << "top_roi ymax: " << label[4];
-    DLOG(INFO) << "next sample next sample " ;     
+
+    auto landmark = datum->mutable_landmark();
+    landmark->set_xlefteye(label[5]);
+    landmark->set_ylefteye(label[6]);
+    landmark->set_xrighteye(label[7]);
+    landmark->set_yrighteye(label[8]);
+    landmark->set_xnose(label[9]);
+    landmark->set_ynose(label[10]);
+    landmark->set_xleftmouth(label[11]);
+    landmark->set_yleftmouth(label[12]);
+    landmark->set_xrightmouth(label[13]);
+    landmark->set_yrightmouth(label[14]);
+     
   }
   return succ;
 }
