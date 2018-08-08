@@ -119,7 +119,7 @@ void OftenMtcnnLossLayer<Dtype>::Forward_cpu(
     }
     face_cls_loss += loss_data[i];
   }
-  face_cls_loss /= batch_size;
+  face_cls_loss /= n;
   top[0]->mutable_cpu_data()[0] = face_cls_loss;
   neg_acc /= n1;
   pos_acc /= n2;
@@ -138,7 +138,7 @@ void OftenMtcnnLossLayer<Dtype>::Forward_cpu(
       bbox_target_data,
       bbox_diff_data);
   Dtype bbox_dot = caffe_cpu_dot(bbox_count, bbox_diff_data, bbox_diff_data);
-  Dtype bbox_reg_loss = bbox_dot / batch_size / Dtype(2);
+  Dtype bbox_reg_loss = bbox_dot / (n2 + n3) / Dtype(2);
   top[1]->mutable_cpu_data()[0] = bbox_reg_loss;
 
 
@@ -152,7 +152,7 @@ void OftenMtcnnLossLayer<Dtype>::Forward_cpu(
       landmark_target_data,
       landmark_diff_data);
   Dtype landmark_dot = caffe_cpu_dot(landmark_count, landmark_diff_data, landmark_diff_data);
-  Dtype landmark_reg_loss = landmark_dot / batch_size / Dtype(2);
+  Dtype landmark_reg_loss = landmark_dot / n4 / Dtype(2);
   top[2]->mutable_cpu_data()[0] = landmark_reg_loss;
 
   // set backward mask for face classification
@@ -195,7 +195,7 @@ void OftenMtcnnLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   caffe_copy(2 * n, prob_data, cls_diff);
   for (int i = 0; i < n; i++) {
     const int label = static_cast<int>(label_data[i]);
-    const Dtype weight = mask_data[i] * top[0]->cpu_diff()[0] / batch_size;
+    const Dtype weight = mask_data[i] * top[0]->cpu_diff()[0] / n;
     if (label == 0) {
       cls_diff[2 * i] -= 1;
     }
@@ -222,7 +222,7 @@ void OftenMtcnnLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   const Dtype* bbox_diff_data = bbox_diff_.cpu_data() + bbox_diff_.offset(n1);
   Dtype* bbox_reg_diff = bottom[1]->mutable_cpu_diff() + bottom[1]->offset(n1);
   const int bbox_count = (n2 + n3) * bottom[1]->channels();
-  const Dtype bbox_alpha = top[1]->cpu_diff()[0] / batch_size;
+  const Dtype bbox_alpha = top[1]->cpu_diff()[0] / (n2 + n3);
   caffe_cpu_axpby(
       bbox_count,
       bbox_alpha,
@@ -235,7 +235,7 @@ void OftenMtcnnLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   const Dtype* landmark_diff_data = landmark_diff_.cpu_data() + landmark_diff_.offset(n1 + n2 + n3);
   Dtype* landmark_reg_loss = bottom[2]->mutable_cpu_diff() + bottom[2]->offset(n1 + n2 + n3);
   const int landmark_count = n4 * bottom[2]->channels();
-  const Dtype landmark_alpha = top[2]->cpu_diff()[0] / batch_size;
+  const Dtype landmark_alpha = top[2]->cpu_diff()[0] / n4;
   caffe_cpu_axpby(
       landmark_count,
       landmark_alpha,

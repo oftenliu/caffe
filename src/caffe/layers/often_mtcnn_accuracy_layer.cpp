@@ -61,10 +61,10 @@ void OftenMtcnnAccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bot
     for (int j = 0; j < inner_num_; ++j) {
       const int label_value =
           static_cast<int>(bottom_label[i * inner_num_ + j]);
-      if (label_value == -1) {
+      if (label_value == -1 || label_value == -2) {
         continue;
       }
-      DCHECK_GE(label_value, -1);
+      DCHECK_GE(label_value, -2);
       DCHECK_LT(label_value, num_labels);
       if (top.size() > 1) ++nums_buffer_.mutable_cpu_data()[label_value];
       const Dtype prob_of_true_class = bottom_data[i * dim

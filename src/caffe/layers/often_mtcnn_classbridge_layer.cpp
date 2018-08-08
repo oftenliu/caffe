@@ -56,7 +56,7 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Forward_cpu(
 
   for (int i = 0; i < batch_size; i++)
   {
-    if (bottom_labels[i] != -1)//传递labels 值为0和１的样本数
+    if (bottom_labels[i] != -1 && bottom_labels[i] != -2)//传递labels 值为0和１的样本数
     {
         for (int j = 0; j < channel; j++)
         {
@@ -86,7 +86,7 @@ void OftenMtcnnClassBridgeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
 
     for (int i = 0; i < batch_size; i++)
     {
-        if (label[i] == -1)//传递labels 值为０和１的样本数
+        if (label[i] == -1 || label[i] == -2)//传递labels 值为０和１的样本数
         {
             for (int j = 0; j < channel; j++)
             {

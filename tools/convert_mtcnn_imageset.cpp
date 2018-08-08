@@ -53,6 +53,7 @@ void split(const string& s, char delim,std::vector<string>& v) {
 
 
 int main(int argc, char** argv) {
+    LOG(INFO) << "0000";
 #ifdef USE_OPENCV
   ::google::InitGoogleLogging(argv[0]);
   // Print output to stderr (while still logging)
@@ -85,12 +86,13 @@ int main(int argc, char** argv) {
   std::string line;
   size_t pos;
   std::string strLabels;
+  LOG(INFO) << "0000";
   while (std::getline(infile, line)) {
     pos = line.find_first_of(' ');
     strLabels = line.substr(pos + 1).c_str();
     std::vector<std::string> strLabelVec;
 	  split(strLabels,' ',strLabelVec);
-    std::vector<float> fLabelVec(5,0);
+    std::vector<float> fLabelVec(15,0);
     for (int i = 0; i< strLabelVec.size(); i++)
     {
       fLabelVec[i] = atof(strLabelVec[i].c_str());

@@ -1,6 +1,6 @@
 #include <cfloat>
 #include "caffe/util/math_functions.hpp"
-#include "caffe/layers/often_mtcnn_loss_layer.hpp"
+#include "caffe/layers/often_mtcnn_landmark_loss_layer.hpp"
 
 namespace caffe {
 

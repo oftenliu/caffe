@@ -123,7 +123,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
   Dtype per_loss = 0;
   for (int i = 0; i < batch_size; ++i) {
       const int label_value = static_cast<int>(label[i]);
-      if (label_value == -1) {
+      if (label_value == -1 || label_value == -2) {
         loss_buffer_[i].loss = 0;
         loss_buffer_[i].index = i;
         continue;
@@ -165,7 +165,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
     int top70Loss = nValidLable * 0.7;//使用正负样本的70%回传梯度
     for (int i = 0; i < batch_size; ++i) {
         const int label_value = static_cast<int>(label[i]);
-        if (label_value == -1) {//如果为忽略标签，不回传梯度
+        if (label_value == -1 || label_value == -2) {//如果为忽略标签，不回传梯度
           for (int c = 0; c < channel; ++c) {
             bottom_diff[i * channel + c ] = 0;
           }

@@ -1,13 +1,15 @@
-#include <vector>
+#include <cmath>
+#include <cfloat>
+#include "caffe/layers/often_mtcnn_landmark_loss_layer.hpp"
+#include <iostream>
 
-#include "caffe/layers/often_mtcnn_euclidean_loss_layer.hpp"
-#include "caffe/util/math_functions.hpp"
+using std::cout;
+using std::endl;
 
 namespace caffe {
-
-template <typename Dtype>
-void OftenMtcnnEuclideanLossLayer<Dtype>::Reshape(
-  const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+template<typename Dtype>
+void OftenMtcnnLandMarkLossLayer<Dtype>::Reshape(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   LossLayer<Dtype>::Reshape(bottom, top);
   CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))
       << "Inputs must have the same dimension.";
@@ -15,9 +17,10 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Reshape(
   diff_.ReshapeLike(*bottom[0]);
 }
 
-template <typename Dtype>
-void OftenMtcnnEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top) {
+
+template<typename Dtype>
+void OftenMtcnnLandMarkLossLayer<Dtype>::Forward_cpu(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
     int count = bottom[0]->count();
 
     const Dtype* label = bottom[2]->cpu_data();
@@ -33,7 +36,7 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>
     Dtype loss = 0;
 
     for (int i = 0; i < batch_size; ++i){//batchsize
-        if (label[i] != 0 && label[i] != -2){
+        if (label[i] == -2){
             caffe_sub(//y[i] = a[i] + - * \ b[i]
                 channel,
                 b0 + i * channel,
@@ -49,10 +52,9 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>
     top[0]->mutable_cpu_data()[0] = loss / valid_label_size / Dtype(2);
 }
 
-template <typename Dtype>
-void OftenMtcnnEuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+template<typename Dtype>
+void OftenMtcnnLandMarkLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
-
     const Dtype* label = bottom[2]->cpu_data();
     for (int i = 0; i < 2; ++i) {
         if (propagate_down[i]) {
@@ -62,7 +64,7 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*
             const Dtype alpha = sign * top[0]->cpu_diff()[0] / valid_label_size;
 
             for (int j = 0; j < batch_size; ++j){
-                if (label[j] != 0  && label[j] != -2){
+                if (label[j] == -2){
                     caffe_cpu_axpby(
                         channel,							// count
                         alpha,                              // alpha
@@ -73,15 +75,16 @@ void OftenMtcnnEuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*
             }
         }
     }
-
-
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(OftenMtcnnEuclideanLossLayer);
-#endif
+STUB_GPU(OftenMtcnnLandMarkLossLayer)
+#endif  // CPU_ONLY
 
-INSTANTIATE_CLASS(OftenMtcnnEuclideanLossLayer);
-REGISTER_LAYER_CLASS(OftenMtcnnEuclideanLoss);
+INSTANTIATE_CLASS(OftenMtcnnLandMarkLossLayer);
+REGISTER_LAYER_CLASS(OftenMtcnnLandMarkLoss);
 
 }  // namespace caffe
+
+
+
