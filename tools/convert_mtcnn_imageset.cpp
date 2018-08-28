@@ -93,11 +93,31 @@ int main(int argc, char** argv) {
     std::vector<std::string> strLabelVec;
 	  split(strLabels,' ',strLabelVec);
     std::vector<float> fLabelVec(15,0);
-    for (int i = 0; i< strLabelVec.size(); i++)
+    fLabelVec[0] = atoi(strLabelVec[0].c_str());
+    if (strLabelVec.size() == 5)
     {
-      fLabelVec[i] = atof(strLabelVec[i].c_str());
+      for (int i = 1; i< strLabelVec.size(); i++)
+      {
+        fLabelVec[i] = atof(strLabelVec[i].c_str());
+      }
     }
+    if (strLabelVec.size() == 11)
+    {
+      for (int i = 1; i< strLabelVec.size(); i++)
+      {
+        fLabelVec[i+4] = atof(strLabelVec[i].c_str());
+      }
+    }
+    // printf("\n========1111111111111111   \n");
+    // for (int i = 0; i < fLabelVec.size();i++)
+    // {
+      
+    //   printf("%f ",fLabelVec[i]);
+      
+    // }
+    // printf("\n  ========2222222222222222\n");
     lines.push_back(std::make_pair(line.substr(0, pos), fLabelVec));
+
   }
   LOG(INFO) << "1111";
   if (FLAGS_shuffle) {

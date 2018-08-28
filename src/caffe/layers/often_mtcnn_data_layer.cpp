@@ -86,13 +86,13 @@ void OftenMtcnnDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bott
     }
 
     //landmark
-    vector<int> landmark_shape(2);
-    landmark_shape[0] = batch_size;
-    landmark_shape[1] = 10;
-    top[3]->Reshape(landmark_shape);
-    for (int i = 0; i < this->prefetch_.size(); ++i) {
-        this->prefetch_[i]->landmark_.Reshape(landmark_shape);
-    }    
+    // vector<int> landmark_shape(2);
+    // landmark_shape[0] = batch_size;
+    // landmark_shape[1] = 10;
+    // top[3]->Reshape(landmark_shape);
+    // for (int i = 0; i < this->prefetch_.size(); ++i) {
+    //     this->prefetch_[i]->landmark_.Reshape(landmark_shape);
+    // }    
 
 }
 
@@ -118,9 +118,9 @@ void OftenMtcnnDataLayer<Dtype>::Forward_cpu(
         top[2]->mutable_cpu_data());
 
     //landmark
-    top[3]->ReshapeLike(batch->landmark_);
-    caffe_copy(batch->landmark_.count(), batch->landmark_.cpu_data(),
-        top[3]->mutable_cpu_data());    
+    //top[3]->ReshapeLike(batch->landmark_);
+    //caffe_copy(batch->landmark_.count(), batch->landmark_.cpu_data(),
+        //top[3]->mutable_cpu_data());    
 
     this->prefetch_free_.push(batch);
 }
@@ -168,8 +168,10 @@ void OftenMtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     Dtype* top_data = batch->data_.mutable_cpu_data();
     Dtype* top_label = batch->label_.mutable_cpu_data();
     Dtype* top_roi = batch->roi_.mutable_cpu_data();
-    Dtype* top_landmark = batch->landmark_.mutable_cpu_data();
-    //Dtype* top_pts = output_pts_ ? batch->pts_.mutable_cpu_data() : 0;
+
+    //landmark
+    //Dtype* top_landmark = batch->landmark_.mutable_cpu_data();
+    
     for (int item_id = 0; item_id < batch_size; ++item_id) {
         timer.Start();
 
@@ -193,16 +195,19 @@ void OftenMtcnnDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         top_roi[item_id+2] = datum.rois().xmax() - datum.rois().xmin() + 1;
         top_roi[item_id+3] = datum.rois().ymax() - datum.rois().ymin() + 1;
 
-        top_landmark[item_id + 0] = datum.landmark().xlefteye();
-        top_landmark[item_id + 1] = datum.landmark().ylefteye();
-        top_landmark[item_id + 2] = datum.landmark().xrighteye();
-        top_landmark[item_id + 3] = datum.landmark().yrighteye();
-        top_landmark[item_id + 4] = datum.landmark().xnose();
-        top_landmark[item_id + 5] = datum.landmark().ynose();
-        top_landmark[item_id + 6] = datum.landmark().xleftmouth();
-        top_landmark[item_id + 7] = datum.landmark().yleftmouth();
-        top_landmark[item_id + 8] = datum.landmark().xrightmouth();
-        top_landmark[item_id + 9] = datum.landmark().yrightmouth();
+        //landmark
+        // top_landmark[item_id + 0] = datum.landmark().xlefteye();
+        // top_landmark[item_id + 1] = datum.landmark().ylefteye();
+        // top_landmark[item_id + 2] = datum.landmark().xrighteye();
+        // top_landmark[item_id + 3] = datum.landmark().yrighteye();
+        // top_landmark[item_id + 4] = datum.landmark().xnose();
+        // top_landmark[item_id + 5] = datum.landmark().ynose();
+        // top_landmark[item_id + 6] = datum.landmark().xleftmouth();
+        // top_landmark[item_id + 7] = datum.landmark().yleftmouth();
+        // top_landmark[item_id + 8] = datum.landmark().xrightmouth();
+        // top_landmark[item_id + 9] = datum.landmark().yrightmouth();
+
+
         // DLOG(INFO) << "top_roi xmin: " << top_roi[item_id+0];
         // DLOG(INFO) << "top_roi ymin: " << top_roi[item_id+1];
         // DLOG(INFO) << "top_roi xmax: " << top_roi[item_id+2];

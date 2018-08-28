@@ -30,7 +30,7 @@ void SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* top_data = top[0]->mutable_cpu_data();
   Dtype* scale_data = scale_.mutable_cpu_data();
   int channels = bottom[0]->shape(softmax_axis_);//classnum
-  int dim = bottom[0]->count() / outer_num_;//classnum=dim 巧合还是？？
+  int dim = bottom[0]->count() / outer_num_;//
   caffe_copy(bottom[0]->count(), bottom_data, top_data);//从bottom 复制到 top，以下操作都在top上进行
   // We need to subtract the max to avoid numerical issues, compute the exp,
   // and then normalize.
@@ -38,10 +38,10 @@ void SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     // initialize scale_data to the first plane
     caffe_copy(inner_num_, bottom_data + i * dim, scale_data);
     for (int j = 0; j < channels; j++) {
-      for (int k = 0; k < inner_num_; k++) {//获取最大值
-        scale_data[k] = std::max(scale_data[k],
-            bottom_data[i * dim + j * inner_num_ + k]);
-      }
+        for (int k = 0; k < inner_num_; k++) {//获取最大值
+            scale_data[k] = std::max(scale_data[k],
+                bottom_data[i * dim + j * inner_num_ + k]);
+        }
     }
     // subtraction　求幂指数之前　先减去最大值　防止数据溢出 top_data = -1*sum_multiplier_.cpu_data()*scale_data + 1*top_data
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels, inner_num_,

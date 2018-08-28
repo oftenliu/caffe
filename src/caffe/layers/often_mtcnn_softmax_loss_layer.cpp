@@ -128,7 +128,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
         loss_buffer_[i].index = i;
         continue;
       }
-      DCHECK_GE(label_value, -1);
+      DCHECK_GE(label_value, -2);
       DCHECK_LT(label_value, prob_.shape(softmax_axis_));
       per_loss = -log(std::max(prob_data[i * channel + label_value],Dtype(FLT_MIN)));     
       loss += per_loss;

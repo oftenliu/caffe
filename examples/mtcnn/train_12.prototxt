@@ -5,10 +5,17 @@ layer {
   top: "data"
   top: "label"
   top: "roi"
-  top: "landmark"
+  #top: "landmark"
+
+  transform_param {
+    mirror: false
+    mean_value: 127.5
+    scale: 0.0078125
+  }
+
   data_param {
     source: "examples/mtcnn/pnet_db"
-    batch_size: 384
+    batch_size: 320#64    #384
     backend: LMDB
   }
 }
@@ -208,42 +215,42 @@ layer {
   propagate_down: 0 
 }
 
-layer {
-  name: "conv4-3"
-  type: "Convolution"
-  bottom: "conv3"
-  top: "conv4-3"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 10
-    kernel_size: 1
-    stride: 1
-     weight_filler {
-      type: "xavier"
-	}
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
+#layer {
+#  name: "conv4-3"
+#  type: "Convolution"
+#  bottom: "conv3"
+#  top: "conv4-3"
+#  param {
+#    lr_mult: 1
+#    decay_mult: 1
+#  }
+#  param {
+#    lr_mult: 2
+#    decay_mult: 0
+#  }
+#  convolution_param {
+#    num_output: 10
+#    kernel_size: 1
+#    stride: 1
+#     weight_filler {
+#      type: "xavier"
+#	}
+#    bias_filler {
+#      type: "constant"
+#      value: 0
+#    }
+#  }
+#}
 
-layer {
-  name: "landmark_loss"
-  type: "OftenMtcnnLandMarkLoss"
-  bottom: "conv4-3"
-  bottom: "landmark"
-  bottom: "label"
-  top: "landmark_loss"
-  loss_weight: 0.5
-  propagate_down: 1
-  propagate_down: 0
-  propagate_down: 0 
-}
+#layer {
+#  name: "landmark_loss"
+#  type: "OftenMtcnnLandMarkLoss"
+#  bottom: "conv4-3"
+#  bottom: "landmark"
+#  bottom: "label"
+#  top: "landmark_loss"
+#  loss_weight: 0.5
+#  propagate_down: 1
+#  propagate_down: 0
+ # propagate_down: 0 
+#}
