@@ -76,8 +76,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
-  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
+
   /**
    * @brief Computes the softmax loss error gradient w.r.t. the predictions.
    *
@@ -107,8 +106,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
    */
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
 
   /// Read the normalization mode parameter and compute the normalizer based
   /// on the blob size.  If normalization_mode is VALID, the count of valid
@@ -117,7 +115,7 @@ class OftenMtcnnSoftmaxLossLayer : public LossLayer<Dtype> {
   virtual Dtype get_normalizer(
       LossParameter_NormalizationMode normalization_mode, int valid_count);
       
-  virtual Dtype SortLoss(vector<Loss_Buffer<Dtype>> &vecLoss);    
+  virtual Dtype GetTok70(vector<Loss_Buffer<Dtype>> &vecLoss,int nValid);    
 
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<Layer<Dtype> > softmax_layer_;

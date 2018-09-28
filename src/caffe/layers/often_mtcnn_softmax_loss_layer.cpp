@@ -7,6 +7,8 @@
 
 namespace caffe {
 
+
+
 template <typename Dtype>
 bool compGreaterByLoss(const Loss_Buffer<Dtype> &a,const Loss_Buffer<Dtype> &b)
 {
@@ -100,14 +102,63 @@ Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::get_normalizer(
 
 
 template <typename Dtype>
-Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::SortLoss(vector<Loss_Buffer<Dtype>> &vecLoss)
+Dtype OftenMtcnnSoftmaxLossLayer<Dtype>::GetTok70(vector<Loss_Buffer<Dtype>> &vecLoss,int nValid)
 {
+
+// static int logcounter = 0;
+
+//     if(logcounter%3072 == 0)
+//     {
+//       LOG(INFO) << "start GetTok70============================== ";
+//       for (int i = 0; i < vecLoss.size();i++)
+//       {
+//         LOG(INFO) << "vecLoss[" <<i << "]: loss = "<< vecLoss[i].loss<<",   index ="<<vecLoss[i].index;
+//       } 
+//     }
+
+
     sort(vecLoss.begin(), vecLoss.end(),compGreaterByLoss<Dtype>);//升序排列
-    for (int i = 0; i < vecLoss.size();i++)
+    // if(logcounter%3072 == 0)
+    // {
+    //   LOG(INFO) << "loss order============================== ";
+    //   for (int i = 0; i < vecLoss.size();i++)
+    //   {
+    //     LOG(INFO) << "vecLoss[" <<i << "]: loss = "<< vecLoss[i].loss<<",   index ="<<vecLoss[i].index;
+    //   } 
+    // }
+
+
+    int nTop70 = nValid * 0.7;
+    for (int i = 0; i < vecLoss.size() - nTop70;i++)
     {
-      vecLoss[i].loss = i;//loss按序号重新赋值　防止loss值相同导致后续产生不必要的bug
+      vecLoss[i].loss = -1;//
+
     }
+
+
+
+    // if(logcounter%3072 == 0)
+    // {
+    //   LOG(INFO) << "loss order gettok70============================== ";
+    //   for (int i = 0; i < vecLoss.size();i++)
+    //   {
+    //     LOG(INFO) << "vecLoss[" <<i << "]: loss = "<< vecLoss[i].loss<<",   index ="<<vecLoss[i].index;
+    //   } 
+    // }
+
+
     sort(vecLoss.begin(), vecLoss.end(),compGreaterByIndex<Dtype>);//升序排列
+
+    // if(logcounter%3072 == 0)
+    // {
+    //   LOG(INFO) << "end GetTok70============================== ";
+    //   for (int i = 0; i < vecLoss.size();i++)
+    //   {
+    //     LOG(INFO) << "vecLoss[" <<i << "]: loss = "<< vecLoss[i].loss<<",   index ="<<vecLoss[i].index;
+    //   }
+    //    logcounter = 0;
+    // }
+    // logcounter++;    
     return 0;
 }
 
@@ -115,6 +166,7 @@ template <typename Dtype>
 void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   // The forward pass computes the softmax prob values.
+
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype* prob_data = prob_.cpu_data();
   const Dtype* label = bottom[1]->cpu_data();
@@ -124,7 +176,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
   for (int i = 0; i < batch_size; ++i) {
       const int label_value = static_cast<int>(label[i]);
       if (label_value == -1 || label_value == -2) {
-        loss_buffer_[i].loss = 0;
+        loss_buffer_[i].loss = -1;
         loss_buffer_[i].index = i;
         continue;
       }
@@ -139,13 +191,14 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Forward_cpu(
 
 
   top[0]->mutable_cpu_data()[0] = loss / get_normalizer(normalization_, nValidLable);
-  SortLoss(loss_buffer_);
+  GetTok70(loss_buffer_,nValidLable);
+
+
   //LOG(INFO) << "Loss: " << top[0]->mutable_cpu_data()[0];
   if (top.size() == 2) {
     top[1]->ShareData(prob_);
   }
-
-
+  
 }
 
 
@@ -162,7 +215,8 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype* label = bottom[1]->cpu_data();
     int count = 0;
-    int top70Loss = nValidLable * 0.7;//使用正负样本的70%回传梯度
+  
+
     for (int i = 0; i < batch_size; ++i) {
         const int label_value = static_cast<int>(label[i]);
         if (label_value == -1 || label_value == -2) {//如果为忽略标签，不回传梯度
@@ -170,7 +224,7 @@ void OftenMtcnnSoftmaxLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
             bottom_diff[i * channel + c ] = 0;
           }
         } else {//计算偏导，预测正确的bottom_diff = f(y_k) - 1，其它不变
-            if (loss_buffer_[i].loss>= top70Loss){//正负样本中损失前70%的回传梯度
+            if (loss_buffer_[i].loss != -1){//正负样本中损失前70%的回传梯度
                 bottom_diff[i * channel + label_value] -= 1;
                 ++count;
             }
